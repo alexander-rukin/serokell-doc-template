@@ -84,7 +84,7 @@ Ordinary Markdown, all of it styled by the template:
 | `- item` / `1. item` | Lists with accent-coloured markers |
 | `> quote` | Quote block with an accent spine |
 | `` `code` `` | Inline code, tinted |
-| ```` ```haskell ```` | Syntax-highlighted code panel, JetBrains Mono |
+| ```` ```haskell ... ``` ```` | Syntax-highlighted code panel, JetBrains Mono |
 | pipe tables | Clean table, hairline rules, no boxes ([see below](#tables)) |
 | `![alt](diagram.svg)` | Full-width image |
 | `[text](url)` | Accent-coloured link |
