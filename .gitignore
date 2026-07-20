@@ -1,10 +1,5 @@
 out/
 .DS_Store
 
-# Raw Google Fonts downloads. Only the cuts actually used are committed, under
-# assets/fonts/ (with their OFL licences). These folders can be deleted.
-/Google_Sans_Flex/
-/JetBrains_Mono/
-
 # Local editor/agent settings
 .claude/settings.local.json

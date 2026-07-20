@@ -150,13 +150,24 @@ out/            generated PDFs (gitignored)
   separate logo asset to maintain.
 - Typst and the `cmarker` package version are pinned (`@preview/cmarker:0.1.8`)
   so builds are reproducible.
-- The raw Google Fonts download folders (`Google_Sans_Flex/`, `JetBrains_Mono/`)
-  are gitignored - only the cuts actually used are committed. You can delete
-  them locally.
+- Only the font cuts actually used are committed. To add a weight or optical
+  size, download the family from Google Fonts and copy the file you need into
+  `assets/fonts/`.
 
 ---
 
-## Licensing of the bundled assets
+## Licence
+
+The code in this repository (`template.typ`, `main.typ`, `build.sh`, the
+`justfile`, and the example content) is licensed under the **Apache License
+2.0**. See [LICENSE](LICENSE) for the full text.
+
+Apache 2.0 was chosen over MIT specifically because section 6 states that the
+licence grants no trademark rights. This repository ships the Serokell wordmark
+inside one of the images, and that carve-out should be explicit in the licence
+rather than only in a README note.
+
+### The bundled assets are licensed separately
 
 - **Fonts.** Google Sans Flex and JetBrains Mono are both under the SIL Open
   Font License 1.1. The full licence text for each ships alongside the font
