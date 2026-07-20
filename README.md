@@ -154,6 +154,22 @@ out/            generated PDFs (gitignored)
   are gitignored - only the cuts actually used are committed. You can delete
   them locally.
 
+---
+
+## Licensing of the bundled assets
+
+- **Fonts.** Google Sans Flex and JetBrains Mono are both under the SIL Open
+  Font License 1.1. The full licence text for each ships alongside the font
+  files in `assets/fonts/`, which is what the OFL requires when redistributing
+  them.
+- **Artwork and logo.** `assets/footer-mountains-*.png` are Serokell brand
+  assets, and the right-hand image has the Serokell wordmark baked into it.
+  They are here so the template builds out of the box; they are not covered by
+  whatever licence applies to the code in this repository. If you are adapting
+  this template for another organisation, replace both images.
+
+---
+
 ### Scripting the build
 
 `build.sh` is a thin, dependency-free wrapper around one `typst compile` call,
