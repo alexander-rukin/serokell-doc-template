@@ -20,6 +20,11 @@ git clone <this-repo> && cd serokell-doc-template
 
 That writes `out/example-proposal.pdf`. If it works, you are set up.
 
+The **first** build downloads the pinned `cmarker` package (~136 KB) from the
+Typst package registry, so it needs network access once. Every build after that
+is fully offline - fonts and artwork are committed to the repo, and nothing is
+read from your system font directory.
+
 If you have [`just`](https://github.com/casey/just) installed you can use it
 instead - it is a thin wrapper over the same script:
 
