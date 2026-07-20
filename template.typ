@@ -26,91 +26,98 @@
 #let title-size = 40pt
 #let title-weight = "semibold"
 
-#let page-margin = (top: 24mm, bottom: 44mm, x: 20mm)
+#let page-margin = (top: 24mm, bottom: 40mm, x: 20mm)
 #let page-width = 210mm // A4
 
-// Footer band geometry. The two mountain images overlap: the wide pale range
-// spans the page, the sharp peak sits on top of it at the right.
+// ---------------------------------------------------------------- artwork
 //
-// The artwork bleeds to the page edges rather than stopping at the text
-// margins. Clipped at the margins it reads as a pasted-in rectangle, because
-// the PNGs are cropped at their own edges; bled to the trim it reads as
-// scenery, and it matches the cover.
+// The mountains are drawn at ONE size everywhere: full page width, peak at
+// `art-peak-height`. Content pages do not get a shrunken copy - they get the
+// same composition, dissolved into the page from the top.
 //
-// Keep (page number + band) under the bottom margin or the artwork runs off the
-// bottom of the page. The pale range is the constraint: at full bleed it is
-// page-width / 7.82 ≈ 27mm tall.
-#let footer-band-height = 28mm
-#let footer-peak-height = 28mm
+// How the dissolve works, because it is easy to get backwards: a white
+// gradient is painted ON TOP of the photo, opaque white at the top fading to
+// fully clear at the bottom. The photo itself is never made transparent. That
+// keeps the mountain solid where it meets the trim edge (nothing shows through
+// it) and removes the hard horizontal cut at its top edge, so the artwork
+// fades out like cloud rather than ending in a line.
+//
+// Making the image itself semi-transparent instead would let the page show
+// through the rock, which reads as a mistake.
 
-// ---------------------------------------------------------------- footer
+#let art-peak-height = 92mm
 
-// `has-art` is passed in by the build script so a missing PNG degrades to a
-// plain rule instead of failing the compile.
-#let footer-art(has-art: true) = {
-  if not has-art {
-    // Placeholder: keeps the layout honest when assets/ is not populated.
-    return box(width: 100%, height: footer-band-height, {
-      place(bottom + left, line(length: 100%, stroke: 0.6pt + hairline))
-      place(
-        bottom + center,
-        dy: -3mm,
-        text(size: 7pt, fill: ink-soft, style: "italic")[
-          footer artwork missing - drop the mountain PNGs into assets/
-        ],
-      )
-    })
-  }
+// Where the white veil stops being fully opaque. Below this fraction of the
+// artwork the mountain starts becoming visible; above it the artwork is gone.
+// Raise it to push the mountain further down the page.
+#let art-fade-start = 38%
 
-  // The box is content-width, so both images are nudged out by the side margin
-  // to reach the page edges.
-  box(width: 100%, height: footer-band-height, {
-    // Left: pale range, full page width, sitting on the baseline.
-    place(
-      bottom + left,
-      dx: -page-margin.x,
-      image("assets/footer-mountains-left.png", width: page-width),
-    )
-    // Right: high-contrast peak (carries the Serokell mark), drawn on top.
-    place(
-      bottom + right,
-      dx: page-margin.x,
-      image("assets/footer-mountains-right.png", height: footer-peak-height),
-    )
+#let mountains(peak-height: art-peak-height) = {
+  box(width: page-width, height: peak-height, {
+    // Left: pale range across the full page width, sitting on the baseline.
+    place(bottom + left, image("assets/footer-mountains-left.png", width: page-width))
+    // Right: high-contrast peak, carrying the Serokell mark, drawn on top.
+    place(bottom + right, image("assets/footer-mountains-right.png", height: peak-height))
   })
 }
 
-// The footer occupies the whole bottom margin and anchors the artwork to the
-// page's bottom edge. Anchoring explicitly (rather than letting the footer flow
-// from `footer-descent`) keeps the mountains flush with the trim edge: the
-// source PNGs are cropped at their own bottom, so any gap below them reads as a
-// mistake instead of a bleed. It also means the page number can change size
-// without shifting the artwork.
+// Content-page backdrop: the same mountains, veiled from the top.
+// Used as `page(background:)` so it sits behind the body text.
+#let backdrop(has-art: true) = {
+  if not has-art { return none }
+
+  place(bottom + left, box(width: page-width, height: art-peak-height, {
+    mountains()
+    // 90deg runs the gradient top -> bottom.
+    place(bottom + left, rect(
+      width: page-width,
+      height: art-peak-height,
+      fill: gradient.linear(
+        (white, 0%),
+        (white, art-fade-start),
+        (white.transparentize(100%), 100%),
+        angle: 90deg,
+      ),
+    ))
+  }))
+}
+
+// ---------------------------------------------------------------- footer
+
+// Page number only, inside the footer, left-hand side. The artwork is no longer
+// footer content - it is the page background - so the footer stays a thin strip
+// and the number sits in it rather than floating above a band.
 #let make-footer(has-art: true) = context {
   let n = counter(page).get().first()
   // Page 1 is the cover - no footer chrome there.
   if n <= 1 { return }
 
   box(width: 100%, height: page-margin.bottom, {
-    place(bottom + left, footer-art(has-art: has-art))
-    place(
-      bottom + right,
-      dy: -(footer-band-height + 2.5mm),
-      text(
-        font: font-body,
-        size: 8.5pt,
-        weight: "medium",
-        fill: ink-soft,
-        str(n),
-      ),
-    )
+    place(top + left, dy: 6mm, text(
+      font: font-body,
+      size: 8.5pt,
+      weight: "medium",
+      fill: ink-soft,
+      str(n),
+    ))
+    if not has-art {
+      // Keeps the layout honest when assets/ is not populated.
+      place(top + left, line(length: 100%, stroke: 0.6pt + hairline))
+    }
   })
 }
 
 // ---------------------------------------------------------------- cover page
 
 #let cover(title: none, subtitle: none, author: none, date: none, has-art: true) = {
-  page(margin: (top: 34mm, bottom: 0mm, x: 20mm), footer: none, header: none, {
+  // background: none - the cover paints its own artwork at full strength, and
+  // must not also inherit the veiled content-page backdrop.
+  page(
+    margin: (top: 34mm, bottom: 0mm, x: 20mm),
+    footer: none,
+    header: none,
+    background: none,
+    {
     // Accent rule as the brand anchor at the top of the cover.
     box(width: 18mm, height: 3.5pt, fill: accent)
     v(10mm)
@@ -145,18 +152,19 @@
       }
     })
 
-    // Push the artwork to the bottom edge of the cover.
-    place(bottom + left, dx: -20mm, {
-      box(width: 210mm, height: 96mm, {
-        if has-art {
-          place(bottom + left, image("assets/footer-mountains-left.png", width: 100%))
-          place(bottom + right, image("assets/footer-mountains-right.png", height: 92mm))
-        } else {
-          place(bottom + left, line(length: 100%, stroke: 0.6pt + hairline))
-        }
-      })
+    // Push the artwork to the bottom edge of the cover, at full strength.
+    place(bottom + left, dx: -page-margin.x, {
+      if has-art {
+        mountains()
+      } else {
+        box(width: page-width, height: art-peak-height, place(
+          bottom + left,
+          line(length: 100%, stroke: 0.6pt + hairline),
+        ))
+      }
     })
-  })
+    },
+  )
 }
 
 // ---------------------------------------------------------------- main show rule
@@ -175,9 +183,9 @@
     paper: "a4",
     margin: page-margin,
     footer: make-footer(has-art: has-art),
-    // 0mm so the footer box starts exactly at the top of the bottom margin and
-    // its full height lands on the page's bottom edge. See `make-footer`.
+    // 0mm so the footer box starts exactly at the top of the bottom margin.
     footer-descent: 0mm,
+    background: backdrop(has-art: has-art),
   )
 
   set text(font: font-body, size: size-body, fill: ink, lang: "en")
