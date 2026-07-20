@@ -26,6 +26,14 @@
 #let title-size = 40pt
 #let title-weight = "semibold"
 
+// How wide a Markdown table is drawn. Two modes:
+//   "auto" - columns are sized to their contents, so a narrow table occupies
+//            only part of the text width and sits to the left.
+//   "full" - columns share the text width equally, so every table spans the
+//            full measure regardless of how little is in it.
+// A document can override this from its frontmatter with `tables: full`.
+#let table-width = "auto"
+
 #let page-margin = (top: 24mm, bottom: 40mm, x: 20mm)
 #let page-width = 210mm // A4
 
@@ -184,6 +192,78 @@
   )
 }
 
+// ---------------------------------------------------------------- md tables
+
+// Shared so the two width modes are styled identically.
+#let table-stroke = (x, y) => (
+  top: if y == 0 { 0pt } else if y == 1 { 1pt + ink } else { 0.5pt + hairline },
+  bottom: 0pt,
+  left: 0pt,
+  right: 0pt,
+)
+
+// Gutter between columns, but the outer edges stay flush with the margins.
+#let table-inset = (x, y) => (
+  left: if x == 0 { 0pt } else { 6mm },
+  right: 0pt,
+  top: 7pt,
+  bottom: 7pt,
+)
+
+// Redraw a Markdown table with fractional columns so it fills the text width.
+//
+// This has to produce a `grid`, not a `table`, for two reasons:
+//   * a `set table(columns: ..)` rule cannot win, because cmarker passes
+//     `columns` explicitly when it builds the element;
+//   * a `show table` rule that returns a new `table` matches its own output and
+//     recurses until Typst gives up.
+// A grid takes the same stroke and inset API, so the result is identical apart
+// from the column widths.
+//
+// Overriding cmarker's `table` through its `scope` looks tempting and does not
+// work: cmarker also resolves `table.cell` and `table.header` against that same
+// name, and a user-defined function has no fields.
+#let stretch-table(it) = {
+  let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
+
+  let convert(c, header: false) = {
+    let body = if header {
+      text(font: font-heading, weight: "semibold", size: 9.5pt, c.body)
+    } else {
+      c.body
+    }
+    let extra = (:)
+    let cs = c.at("colspan", default: 1)
+    if cs != 1 { extra.insert("colspan", cs) }
+    let rs = c.at("rowspan", default: 1)
+    if rs != 1 { extra.insert("rowspan", rs) }
+    grid.cell(..extra, body)
+  }
+
+  let kids = ()
+  for c in it.children {
+    if c.func() == table.header {
+      kids.push(grid.header(..c.children.map(x => convert(x, header: true))))
+    } else if c.func() == table.footer {
+      kids.push(grid.footer(..c.children.map(convert)))
+    } else {
+      kids.push(convert(c))
+    }
+  }
+
+  // Column alignment from the Markdown colons lives on the table element's
+  // `align` field as an array like (left, center, right), NOT on the cells -
+  // the cells carry nothing but their body. Forgetting to carry this over
+  // silently left-aligns every column.
+  grid(
+    columns: (1fr,) * n,
+    align: it.at("align", default: auto),
+    stroke: table-stroke,
+    inset: table-inset,
+    ..kids,
+  )
+}
+
 // ---------------------------------------------------------------- main show rule
 
 #let report(
@@ -192,6 +272,7 @@
   author: none,
   date: none,
   has-art: true,
+  tables: table-width,
   body,
 ) = {
   set document(title: title, author: if author == none { () } else { author })
@@ -260,22 +341,7 @@
 
   // --- tables ---------------------------------------------------------------
   // Clean and rule-light: a heavy line under the header, hairlines between rows.
-  set table(
-    stroke: (x, y) => (
-      top: if y == 0 { 0pt } else if y == 1 { 1pt + ink } else { 0.5pt + hairline },
-      bottom: 0pt,
-      left: 0pt,
-      right: 0pt,
-    ),
-    // Gutter between columns, but the outer edges stay flush with the margins.
-    inset: (x, y) => (
-      left: if x == 0 { 0pt } else { 6mm },
-      right: 0pt,
-      top: 7pt,
-      bottom: 7pt,
-    ),
-    fill: none,
-  )
+  set table(stroke: table-stroke, inset: table-inset, fill: none)
   show table.cell.where(y: 0): set text(
     font: font-heading,
     weight: "semibold",
@@ -283,6 +349,10 @@
   )
   show table: set par(justify: false)
   show table: set text(size: 9.5pt)
+
+  // In "full" mode the table is rebuilt as a grid with fractional columns.
+  // See `stretch-table` for why it has to be a grid and not a table.
+  show table: it => if tables == "full" { stretch-table(it) } else { it }
 
   // --- quotes ---------------------------------------------------------------
   set quote(block: true)

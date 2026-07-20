@@ -122,15 +122,32 @@ usually worth it:
 **Inside a cell** you can use `**bold**`, `*italic*`, `` `code` ``, and
 `[links](https://example.com)`. All of them are styled as they are in body text.
 
-Two limits worth knowing:
+#### Table width
 
-- A table is only as wide as its contents, so a narrow two-column table sits in
-  a narrow strip rather than spanning the text width. Widen it by giving a cell
-  more text, or change the `set table` block in `template.typ` if you want every
-  table stretched to the measure.
-- A cell cannot contain a real bulleted list or a code block. You can force a
-  line break inside a cell with `<br>`, but a `-` typed after it stays a literal
-  dash rather than becoming a bullet.
+There are two modes, and which one looks better depends on your document, so
+try both:
+
+| Mode | Result |
+| --- | --- |
+| `auto` (default) | Columns are sized to their contents. A table with little in it stays narrow and sits to the left. |
+| `full` | Columns share the text width equally, so every table spans the full measure. Long cells wrap onto several lines. |
+
+Switch per document from the frontmatter:
+
+```markdown
+---
+title: My proposal
+tables: full
+---
+```
+
+To change the default for every document instead, set `table-width` at the top
+of `template.typ`. Column alignment from the colons works the same in both
+modes.
+
+One limit worth knowing: a cell cannot contain a real bulleted list or a code
+block. You can force a line break inside a cell with `<br>`, but a `-` typed
+after it stays a literal dash rather than becoming a bullet.
 
 Image paths are resolved **relative to your `.md` file**, so if your document is
 `content/my-proposal.md`, then `![](diagram.svg)` points at

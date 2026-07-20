@@ -8,7 +8,7 @@
 //     --input art=true
 // =============================================================================
 
-#import "template.typ": report, split-frontmatter
+#import "template.typ": report, split-frontmatter, table-width
 #import "@preview/cmarker:0.1.8"
 
 #let doc-path = sys.inputs.at("doc", default: "content/example-proposal.md")
@@ -35,6 +35,8 @@
   author: meta.at("author", default: none),
   date: meta.at("date", default: none),
   has-art: has-art,
+  // "auto" or "full"; a document's frontmatter wins over the template default.
+  tables: meta.at("tables", default: table-width),
 )
 
 // Body images default to the full content width.
