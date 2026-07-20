@@ -52,6 +52,14 @@
 // Raise it to push the mountain further down the page.
 #let art-fade-start = 38%
 
+// Vertical centre of the Serokell mark baked into the peak image, as a fraction
+// of that image's height measured from its top. Taken from the source PNG: the
+// glyph occupies rows 773..835 of 940. The page number is aligned to the same
+// line, so the two read as one row across the foot of the page. Re-measure this
+// if footer-mountains-right.png is ever replaced.
+#let art-logo-centre = 0.8553
+#let footer-baseline = art-peak-height * (1.0 - art-logo-centre)
+
 #let mountains(peak-height: art-peak-height) = {
   box(width: page-width, height: peak-height, {
     // Left: pale range across the full page width, sitting on the baseline.
@@ -92,14 +100,23 @@
   // Page 1 is the cover - no footer chrome there.
   if n <= 1 { return }
 
+  // The number is centred on `footer-baseline`, the same line the Serokell mark
+  // sits on inside the artwork. A fixed-height box centred with `horizon` keeps
+  // that true regardless of the number's own font size.
+  let slug = 6mm
+
   box(width: 100%, height: page-margin.bottom, {
-    place(top + left, dy: 6mm, text(
-      font: font-body,
-      size: 8.5pt,
-      weight: "medium",
-      fill: ink-soft,
-      str(n),
-    ))
+    place(
+      bottom + left,
+      dy: -(footer-baseline - slug / 2),
+      box(height: slug, align(horizon, text(
+        font: font-body,
+        size: 8.5pt,
+        weight: "medium",
+        fill: ink-soft,
+        str(n),
+      ))),
+    )
     if not has-art {
       // Keeps the layout honest when assets/ is not populated.
       place(top + left, line(length: 100%, stroke: 0.6pt + hairline))
