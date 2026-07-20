@@ -25,6 +25,34 @@ Typst package registry, so it needs network access once. Every build after that
 is fully offline - fonts and artwork are committed to the repo, and nothing is
 read from your system font directory.
 
+### Or install it as a Claude Code plugin
+
+If you use Claude Code, you do not have to clone this at all. Install it once:
+
+```
+/plugin marketplace add alexander-rukin/serokell-doc-template
+/plugin install serokell-docs@serokell-docs
+```
+
+After that you can ask for a PDF from any folder on your machine, and the
+document does not have to live in `content/`:
+
+> Make a PDF from proposal.md
+
+The skill knows where the template is, asks for a title block if the file has no
+frontmatter, and writes the PDF next to the source file. Typst still has to be
+installed.
+
+To build a file directly without Claude Code, the same entry point works:
+
+```bash
+./render.sh ~/notes/proposal.md            # -> ~/notes/proposal.pdf
+./render.sh ~/notes/proposal.md /tmp/x.pdf
+```
+
+Unlike `build.sh`, `render.sh` takes a document from anywhere and never writes
+inside the template directory.
+
 If you have [`just`](https://github.com/casey/just) installed you can use it
 instead - it is a thin wrapper over the same script:
 

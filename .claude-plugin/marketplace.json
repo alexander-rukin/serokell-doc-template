@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "serokell-docs",
+  "description": "The Serokell document template, packaged so a Markdown file can be turned into a branded PDF without cloning anything.",
+  "owner": {
+    "name": "Serokell OÜ"
+  },
+  "plugins": [
+    {
+      "name": "serokell-docs",
+      "description": "Turn Markdown into branded Serokell PDFs. Bundles the house template, fonts, and artwork; the author only writes Markdown.",
+      "category": "productivity",
+      "source": "./",
+      "homepage": "https://github.com/alexander-rukin/serokell-doc-template"
+    }
+  ]
+}
