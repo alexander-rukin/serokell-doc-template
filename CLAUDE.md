@@ -51,6 +51,41 @@ the text width equally).
 To change the default for every document, set `table-width` at the top of
 `template.typ`. That is the only token in that file intended to be flipped.
 
+## When someone hands you a Markdown file
+
+A document gets a cover page from its frontmatter block:
+
+```markdown
+---
+title: Formal Verification of the Settlement Layer
+subtitle: A technical proposal
+author: Serokell OÜ
+date: 20 July 2026
+---
+```
+
+Only `title` is required for a cover; `subtitle`, `author`, and `date` are each
+optional and simply left off if absent.
+
+**If the file arrives without that block, or without a `title`, ask before
+building.** Something like: "This file has no title block, so it will build
+without a cover page. Do you want a title, author, and date, or shall I build it
+as is?"
+
+Then:
+
+- If they supply the details, add the frontmatter to the top of the `.md` and
+  build normally.
+- **If they want to skip, that is a supported outcome, not a fallback.** Build
+  it as is. The document comes out with no cover, content starting on page 1,
+  and the footer and artwork on every page. Do not push back on this.
+
+**Never invent a title, author, or date.** A wrong author on a client proposal
+is worse than no cover page. If they do not give you one, build without a cover.
+
+A file that has a title but should still skip the cover can say `cover: false`
+in its frontmatter.
+
 ## Everything else lives in the Markdown
 
 Content questions ("add a section", "make this a table", "insert an image") are

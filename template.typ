@@ -103,10 +103,11 @@
 // Page number only, inside the footer, left-hand side. The artwork is no longer
 // footer content - it is the page background - so the footer stays a thin strip
 // and the number sits in it rather than floating above a band.
-#let make-footer(has-art: true) = context {
+#let make-footer(has-art: true, cover-page: true) = context {
   let n = counter(page).get().first()
-  // Page 1 is the cover - no footer chrome there.
-  if n <= 1 { return }
+  // Page 1 is the cover and carries no footer chrome - but only when there is
+  // a cover. Without one, page 1 is already content and needs its number.
+  if cover-page and n <= 1 { return }
 
   // The number is centred on `footer-baseline`, the same line the Serokell mark
   // sits on inside the artwork. A fixed-height box centred with `horizon` keeps
@@ -266,21 +267,28 @@
 
 // ---------------------------------------------------------------- main show rule
 
+// `cover-page: false` drops the title page entirely. A Markdown file with no
+// frontmatter has no title, author, or date to put on one, so it is built as
+// bare content starting on page 1.
 #let report(
-  title: "Untitled",
+  title: none,
   subtitle: none,
   author: none,
   date: none,
   has-art: true,
   tables: table-width,
+  cover-page: true,
   body,
 ) = {
-  set document(title: title, author: if author == none { () } else { author })
+  set document(
+    title: if title == none { "" } else { title },
+    author: if author == none { () } else { author },
+  )
 
   set page(
     paper: "a4",
     margin: page-margin,
-    footer: make-footer(has-art: has-art),
+    footer: make-footer(has-art: has-art, cover-page: cover-page),
     // 0mm so the footer box starts exactly at the top of the bottom margin.
     footer-descent: 0mm,
     background: backdrop(has-art: has-art),
@@ -381,15 +389,18 @@
   // --- rules ----------------------------------------------------------------
   show line: set line(stroke: 0.6pt + hairline)
 
-  cover(
-    title: title,
-    subtitle: subtitle,
-    author: author,
-    date: date,
-    has-art: has-art,
-  )
+  if cover-page {
+    cover(
+      title: title,
+      subtitle: subtitle,
+      author: author,
+      date: date,
+      has-art: has-art,
+    )
+    // Content starts on page 2; the cover is page 1 and carries no footer.
+    counter(page).update(2)
+  }
 
-  counter(page).update(2)
   body
 }
 

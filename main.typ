@@ -29,8 +29,14 @@
   if path.starts-with("/") { path.slice(1) } else { doc-dir + path }
 }
 
+// No frontmatter title means there is nothing to put on a cover, so the
+// document is built without one. `cover: false` skips it even when a title is
+// present.
+#let wants-cover = "title" in meta and meta.at("cover", default: "true") != "false"
+
 #show: report.with(
-  title: meta.at("title", default: "Untitled document"),
+  title: meta.at("title", default: none),
+  cover-page: wants-cover,
   subtitle: meta.at("subtitle", default: none),
   author: meta.at("author", default: none),
   date: meta.at("date", default: none),

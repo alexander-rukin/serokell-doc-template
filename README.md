@@ -67,6 +67,12 @@ Your content starts here.
 Only `title` is required. `subtitle`, `author`, and `date` are each optional
 and are simply omitted from the cover if absent.
 
+**The frontmatter itself is optional too.** A file with no title block builds
+without a cover page: the content starts on page 1 and every page carries the
+footer and artwork as usual. Useful for a short note or a draft that does not
+warrant a title page. A file that has a title but should still skip the cover
+can say `cover: false`.
+
 ### What's supported
 
 Ordinary Markdown, all of it styled by the template:
