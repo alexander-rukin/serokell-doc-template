@@ -79,9 +79,58 @@ Ordinary Markdown, all of it styled by the template:
 | `> quote` | Quote block with an accent spine |
 | `` `code` `` | Inline code, tinted |
 | ```` ```haskell ```` | Syntax-highlighted code panel, JetBrains Mono |
-| `\| a \| b \|` | Clean table, hairline rules, no boxes |
+| pipe tables | Clean table, hairline rules, no boxes ([see below](#tables)) |
 | `![alt](diagram.svg)` | Full-width image |
 | `[text](url)` | Accent-coloured link |
+
+### Tables
+
+Standard Markdown pipe tables. The second row, the one made of dashes, is not
+decoration - it is what tells the parser this is a table at all, and it must
+have one entry per column:
+
+```markdown
+| Phase         | Duration | Effort  |
+| ---           | ---      | ---     |
+| Specification | 4 weeks  | 1.5 FTE |
+| Verification  | 6 weeks  | 2.0 FTE |
+```
+
+The first row is the header. It is set in the heading font with a rule under
+it; the remaining rows are separated by hairlines. There are no vertical rules
+and no outer box.
+
+You do not need to line the pipes up. This is the same table:
+
+```markdown
+| Phase | Duration | Effort |
+| --- | --- | --- |
+| Specification | 4 weeks | 1.5 FTE |
+```
+
+**Column alignment** is set with colons in the dash row: `:---` left (the
+default), `:---:` centred, `---:` right. Right-aligning numeric columns is
+usually worth it:
+
+```markdown
+| Item      | Qty | Amount |
+| :---      | :---: | ---: |
+| Licences  |  12 | 4,800  |
+| Support   |   1 | 12,000 |
+```
+
+**Inside a cell** you can use `**bold**`, `*italic*`, `` `code` ``, and
+`[links](https://example.com)`. All of them are styled as they are in body text.
+
+Two limits worth knowing:
+
+- A table is only as wide as its contents, so a narrow two-column table sits in
+  a narrow strip rather than spanning the text width. Widen it by giving a cell
+  more text, or change the `set table` block in `template.typ` if you want every
+  table stretched to the measure.
+- A cell cannot contain a real bulleted list or a code block. You can force a
+  line break inside a cell with `<br>`, but a `-` typed after it stays a literal
+  dash rather than becoming a bullet.
 
 Image paths are resolved **relative to your `.md` file**, so if your document is
 `content/my-proposal.md`, then `![](diagram.svg)` points at
