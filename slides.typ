@@ -2,33 +2,39 @@
 // Serokell slide system - reusable 16:9 layout library.
 //
 // One brand shell, many slide formats. Reuses the doc-template's design tokens,
-// Google Sans Flex optical fonts and the mountain artwork (which carries the
-// Serokell mark), so a deck is an example of the house style it presents.
+// Google Sans Flex optical fonts (Cyrillic via a bundled Golos Text fallback)
+// and the mountain artwork with the Serokell mark.
+//
+// Theme:  compile with  --input theme=dark  (default light).
 //
 // Usage:
 //   #import "slides.typ": *
-//   #cover([Title], subtitle: [..], meta: [..])
-//   #bullets([Heading], ([point], [point], ..))
+//   #cover([Title], subtitle: [..])
 //   ... one call per slide, in order.
 //
-// Every layout takes an optional `tag: "..."` that prints a faint corner label -
-// used only by the gallery demo; omit it in a real deck.
+// Every layout takes an optional `tag: "..."` (faint corner label, gallery only).
 // =============================================================================
 
-// ---- design tokens (from template.typ) --------------------------------------
-#let accent    = rgb("#D92B04")
-#let ink       = rgb("#1A1A1A")
-#let ink-soft  = rgb("#5A5F66")
-#let hairline  = rgb("#DDE1E5")
-#let code-bg   = rgb("#F5F6F7")
-#let panel-bg  = rgb("#F0EEF0")
+// ---- theme ------------------------------------------------------------------
+#let theme = sys.inputs.at("theme", default: "light")
+#let dark  = theme == "dark"
 
-// ---- fonts (per optical size, exactly as the doc template) ------------------
+// ---- design tokens ----------------------------------------------------------
+#let accent   = rgb("#D92B04")
+#let bg       = if dark { rgb("#141518") } else { white }
+#let ink      = if dark { rgb("#F3F4F6") } else { rgb("#1A1A1A") }
+#let ink-soft = if dark { rgb("#9AA0A6") } else { rgb("#5A5F66") }
+#let hairline = if dark { rgb("#2E3236") } else { rgb("#DDE1E5") }
+#let code-bg  = if dark { rgb("#1E2024") } else { rgb("#F5F6F7") }
+#let panel-bg = if dark { rgb("#24262B") } else { rgb("#F0EEF0") }
+#let mark-img = if dark { "assets/serokell-mark-light.png" } else { "assets/serokell-mark-dark.png" }
+
+// ---- fonts (Latin: Google Sans optical; Cyrillic fallback: Golos Text) ------
 #let font-emoji   = "Noto Color Emoji"
-#let font-display = ("Google Sans Flex 120pt", font-emoji) // cover / big numbers
-#let font-heading = ("Google Sans Flex 36pt", font-emoji)  // slide titles
-#let font-body    = ("Google Sans Flex 24pt", font-emoji)  // body copy
-#let font-mono    = ("JetBrains Mono", font-emoji)
+#let font-display = ("Google Sans Flex 120pt", "Golos Text", font-emoji)
+#let font-heading = ("Google Sans Flex 36pt", "Golos Text", font-emoji)
+#let font-body    = ("Google Sans Flex 24pt", "Golos Text", font-emoji)
+#let font-mono    = ("JetBrains Mono", "Golos Text", font-emoji)
 
 // ---- geometry (16:9) --------------------------------------------------------
 #let W  = 254mm
@@ -39,12 +45,19 @@
 #set text(font: font-body, size: 14pt, fill: ink, lang: "ru")
 #set par(leading: 0.6em)
 
-// ---- shared pieces ----------------------------------------------------------
-#let art-band(peak: 42mm, x: MX) = place(bottom + left, dx: -x, box(width: W, height: peak, {
-  place(bottom + left,  image("assets/footer-mountains-left.png",  width: W))
-  place(bottom + right, image("assets/footer-mountains-right.png", height: peak))
-}))
+// ---- brand artwork (bookends only) ------------------------------------------
+// Light: the white-veiled mountain range with the Serokell mark.
+// Dark:  the range would need a white veil, so instead a large faint mark.
+#let art-band(peak: 40mm, x: MX) = if dark {
+  place(bottom + right, dy: -12mm, box(image(mark-img, height: 20mm)))
+} else {
+  place(bottom + left, dx: -x, box(width: W, height: peak, {
+    place(bottom + left,  image("assets/footer-mountains-left.png",  width: W))
+    place(bottom + right, image("assets/footer-mountains-right.png", height: peak))
+  }))
+}
 
+// ---- shared pieces ----------------------------------------------------------
 #let mono(s) = box(fill: code-bg, inset: (x: 3pt, y: 1pt), radius: 2pt,
   text(font: font-mono, size: 10.5pt, s))
 
@@ -60,12 +73,26 @@
   v(7mm)
 }
 
+// Footer: small Serokell mark on the left, slide number on the right.
+#let deck-footer = context {
+  let n = counter(page).get().first()
+  grid(columns: (1fr, 1fr),
+    align(left + horizon, box(image(mark-img, height: 4.6mm))),
+    align(right + horizon, text(font: font-body, size: 9pt, weight: "medium", fill: ink-soft, str(n))))
+}
+
 // The single page primitive every layout builds on.
-#let slide-raw(body, mtop: 16mm, mbot: 14mm, x: MX, tag: none) = page(
-  width: W, height: H, margin: (x: x, top: mtop, bottom: mbot), fill: white,
+#let slide-raw(body, mtop: 16mm, mbot: 16mm, x: MX, tag: none, foot: true) = page(
+  width: W, height: H, margin: (x: x, top: mtop, bottom: mbot), fill: bg,
+  footer-descent: 7mm,
+  footer: if foot { deck-footer } else { none },
   {
+    // Module-level `set` rules do NOT cross the import boundary, so establish the
+    // brand font, ink colour and leading here - every slide's body inherits them.
+    set text(font: font-body, fill: ink, size: 14pt)
+    set par(leading: 0.6em)
     if tag != none {
-      place(top + right, text(font: font-mono, size: 8pt, fill: hairline)[#tag])
+      place(top + right, text(font: font-mono, size: 8pt, fill: ink-soft.transparentize(45%))[#tag])
     }
     body
   },
@@ -75,8 +102,8 @@
 // LAYOUTS
 // =============================================================================
 
-// 1. Cover - deck opener.
-#let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(mtop: 26mm, mbot: 0mm, x: 20mm, tag: tag, {
+// 1. Cover - deck opener (bookend artwork, no footer).
+#let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(mtop: 26mm, mbot: 0mm, x: 20mm, tag: tag, foot: false, {
   box(width: 18mm, height: 3.5pt, fill: accent)
   v(9mm)
   text(font: font-display, size: 34pt, weight: "semibold", fill: ink)[#par(leading: 0.3em, justify: false, title)]
@@ -91,24 +118,23 @@
   art-band(peak: 40mm, x: 20mm)
 })
 
-// 2. Section divider - big number + section title over the range.
-#let section(no, title, tag: none) = slide-raw(mtop: 30mm, mbot: 0mm, tag: tag, {
-  text(font: font-display, size: 80pt, weight: "black", fill: accent, no)
-  v(1mm)
+// 2. Section divider - big number + section title.
+#let section(no, title, tag: none) = slide-raw(mtop: 34mm, tag: tag, {
+  text(font: font-display, size: 78pt, weight: "black", fill: accent,
+    top-edge: "cap-height", bottom-edge: "baseline", no)
+  v(9mm)
   text(font: font-heading, size: 30pt, weight: "bold", fill: ink, title)
-  art-band(peak: 44mm)
 })
 
 // 3. Statement - one big sentence.
-#let statement(body, sub: none, tag: none) = slide-raw(mtop: 24mm, mbot: 0mm, tag: tag, {
+#let statement(body, sub: none, tag: none) = slide-raw(mtop: 30mm, tag: tag, {
   box(width: 16mm, height: 3.5pt, fill: accent)
   v(9mm)
   text(font: font-heading, size: 32pt, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, body)]
   if sub != none {
-    v(6mm)
+    v(7mm)
     text(font: font-body, size: 13.5pt, fill: ink-soft)[#par(leading: 0.5em, justify: false, sub)]
   }
-  art-band(peak: 44mm)
 })
 
 // 4. Bullets - heading + list, with an optional lead line.
@@ -152,8 +178,6 @@
 #let stat(number, caption, sub: none, tag: none) = slide-raw(mtop: 30mm, tag: tag, {
   box(width: 16mm, height: 3.5pt, fill: accent)
   v(10mm)
-  // Pin the tall display glyphs into a fixed-height box so their oversized
-  // line-box ascent does not blow up the flow spacing below.
   box(height: 26mm, align(bottom,
     text(font: font-display, size: 62pt, weight: "black", fill: accent, number)))
   v(9mm)
@@ -241,5 +265,14 @@
     })))
 })
 
-// 13. Closing - final statement over the mountains.
-#let closing(body, sub: none, tag: none) = statement(body, sub: sub, tag: tag)
+// 13. Closing - final statement over the artwork (bookend, no footer).
+#let closing(body, sub: none, tag: none) = slide-raw(mtop: 30mm, mbot: 0mm, tag: tag, foot: false, {
+  box(width: 16mm, height: 3.5pt, fill: accent)
+  v(9mm)
+  text(font: font-heading, size: 30pt, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, body)]
+  if sub != none {
+    v(7mm)
+    text(font: font-body, size: 13.5pt, fill: ink-soft)[#par(leading: 0.5em, justify: false, sub)]
+  }
+  art-band(peak: 42mm)
+})

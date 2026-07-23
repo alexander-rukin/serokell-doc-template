@@ -23,6 +23,14 @@ The brand shell is locked and reused from the doc-template: same tokens, same
 Google Sans Flex optical fonts, the same mountain artwork (which carries the
 Serokell mark). A deck is therefore itself an example of the house style.
 
+- **Cyrillic** renders in a bundled Golos Text fallback (Google Sans Flex is
+  Latin-only, so Russian without it drops to a serif). Latin stays Google Sans.
+- **Footer**: every slide except cover/closing shows a small Serokell mark (left)
+  and the slide number (right).
+- **Themes**: light (default) or dark - `theme: dark` in deck.md frontmatter, or
+  `--input theme=dark` for a raw build. Dark swaps the palette and replaces the
+  bookend mountains with a large faint mark.
+
 ## Files
 
 - `deck.md` (author surface) - one markdown file per deck: a layout tag + text

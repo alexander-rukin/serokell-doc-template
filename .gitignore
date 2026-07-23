@@ -6,3 +6,4 @@ out/
 
 # generated decks
 _*.typ
+decks/*.pdf

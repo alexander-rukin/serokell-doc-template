@@ -12,7 +12,7 @@ seconds. Same file, same result on any machine. You never touch Typst.
 
 ```
 ---                      # optional deck settings (key: value)
-theme: serokell
+theme: light             # light (default) or dark
 ---
 
 @cover                   # every slide starts with @<layout> [key=value ...]
@@ -40,6 +40,9 @@ Plain prose here becomes the body.
 - Options can also ride on the `@` line: `@split image=assets/x.png`, `@section no=02`.
 - Text is literal - write single hyphens, arrows like `->`, parentheses freely.
   (Inline markdown bold/italic is not interpreted in v1.)
+- Cyrillic renders in the bundled Golos Text (Latin stays Google Sans Flex).
+- Every slide except the cover/closing carries a footer: small Serokell mark
+  left, slide number right. Set `theme: dark` for the dark palette.
 
 ## Layouts and their fields
 

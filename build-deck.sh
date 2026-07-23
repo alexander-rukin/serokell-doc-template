@@ -17,10 +17,15 @@ fi
 gen="${here}/_$(basename "${md%.md}").typ"
 python3 "${here}/slidegen.py" "$md" > "$gen"
 
+# theme (light|dark) from the deck.md frontmatter, or override with THEME=dark
+theme="${THEME:-$(sed -n '/^---/,/^---/p' "$md" | grep -oiE '^theme:[[:space:]]*[a-z]+' | head -1 | grep -oiE '[a-z]+$')}"
+theme="${theme:-light}"
+
 typst compile \
   --font-path "${here}/assets/fonts" \
   --ignore-system-fonts \
   --root "${here}" \
+  --input "theme=${theme}" \
   "$gen" "$out"
 
 echo "built: $out"
