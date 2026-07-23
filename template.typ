@@ -308,26 +308,27 @@
   // Space-below is deliberately larger than it looks it needs to be. Heading
   // descenders (the tails on g/y/p) eat into it, and the nominal value has to
   // clear the body's own paragraph spacing (~3.4mm) or a heading ends up closer
-  // to its text than two paragraphs are to each other. Kept at a ~2:1
-  // above:below ratio. Adjacent weak spacing collapses to the larger of the
+  // to its text than two paragraphs are to each other. The gap below is kept
+  // generous so a heading reads as attached to the section it opens, not
+  // floating midway between two. Adjacent weak spacing collapses to the larger of the
   // two, so an H1 directly followed by an H2 stays at the H2's gap-above rather
   // than summing.
   show heading.where(level: 1): it => {
     v(9mm, weak: true)
     block(text(size: 20pt, weight: "bold", it.body))
-    v(5.5mm, weak: true)
+    v(7mm, weak: true)
   }
 
   show heading.where(level: 2): it => {
     v(7mm, weak: true)
     block(text(size: 14pt, weight: "semibold", it.body))
-    v(3.5mm, weak: true)
+    v(5mm, weak: true)
   }
 
   show heading.where(level: 3): it => {
     v(5mm, weak: true)
     block(text(size: 11.5pt, weight: "semibold", fill: ink-soft, it.body))
-    v(2.5mm, weak: true)
+    v(3.5mm, weak: true)
   }
 
   // --- links ----------------------------------------------------------------
