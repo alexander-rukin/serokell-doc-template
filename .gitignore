@@ -3,3 +3,6 @@ out/
 
 # Local editor/agent settings
 .claude/settings.local.json
+
+# generated decks
+_*.typ

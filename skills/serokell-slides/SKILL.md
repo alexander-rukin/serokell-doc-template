@@ -25,23 +25,42 @@ Serokell mark). A deck is therefore itself an example of the house style.
 
 ## Files
 
-- `slides.typ` - the layout library. One `#let` per layout. Reusable, locked,
-  production-clean. This is the "template" - a brand change is one file.
+- `deck.md` (author surface) - one markdown file per deck: a layout tag + text
+  per slide. The human edits this and nothing else. See `FORMAT.md`.
+- `slidegen.py` - turns a `deck.md` into a Typst deck.
+- `build-deck.sh` - `deck.md` -> branded PDF in one command.
+- `slides.typ` - the layout library. One `#let` per layout. Locked brand shell -
+  a brand change is one file.
 - `gallery.typ` - a demo deck, one slide per layout, faint mono corner tag
   naming each. Render it to see the whole visual vocabulary.
 
-Both depend on the doc-template's `assets/` (the two `footer-mountains-*.png`
-and the `assets/fonts/` optical families). Build from a checkout of
-`serokell-doc-template` (or any dir that has that `assets/`).
+All depend on the doc-template's `assets/` (the two `footer-mountains-*.png` and
+`assets/fonts/`). Work from a checkout of `serokell-doc-template`.
 
-## Build
+## Build (author path - preferred)
+
+Author edits `decks/my-deck.md`, then:
+
+```
+./build-deck.sh decks/my-deck.md        # -> decks/my-deck.pdf
+```
+
+Edit text, rerun, PDF regenerates in seconds. The layout library and brand stay
+locked; the author only ever touches the markdown. This is the "same format
+everywhere, easy to edit, fast to regenerate" surface.
+
+## Build (raw Typst path - when composing a fresh deck)
+
+When you compose a new deck from a brief and want full layout control before it
+exists as `deck.md`, write the Typst directly:
 
 ```
 typst compile --font-path assets/fonts --ignore-system-fonts deck.typ deck.pdf
 ```
 
-Copy `slides.typ` next to your `deck.typ` inside the repo (so `assets/` resolves)
-and `#import "slides.typ": *` at the top of the deck.
+Put `deck.typ` next to `slides.typ` (so `assets/` resolves) and
+`#import "slides.typ": *` at the top. Then hand the human the `deck.md` form so
+they can iterate on text themselves.
 
 ## Layout catalog
 
