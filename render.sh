@@ -41,6 +41,9 @@ else
 fi
 mkdir -p "$(dirname "$OUT")"
 
+# Advisory checks on the author's Markdown. Hints only; never blocks the build.
+[ -x "$TEMPLATE_DIR/md-advice.sh" ] && "$TEMPLATE_DIR/md-advice.sh" "$SRC"
+
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 

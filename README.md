@@ -101,6 +101,14 @@ footer and artwork as usual. Useful for a short note or a draft that does not
 warrant a title page. A file that has a title but should still skip the cover
 can say `cover: false`.
 
+### Build hints
+
+Every build runs a few advisory checks on your Markdown and prints `hint:` lines
+for things that are easy to get wrong and hard to spot afterwards: emoji (which
+render as empty boxes, since the bundled fonts have no emoji glyphs), adjacent
+`Label: value` lines (which Markdown merges into one paragraph), and repeated
+generic headings. They are suggestions only and never stop the build.
+
 ### What's supported
 
 Ordinary Markdown, all of it styled by the template:

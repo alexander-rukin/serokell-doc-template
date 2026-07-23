@@ -45,6 +45,9 @@ if [ ! -f "$SRC" ]; then
   exit 1
 fi
 
+# Advisory checks on the author's Markdown. Hints only; never blocks the build.
+[ -x "$REPO_ROOT/md-advice.sh" ] && "$REPO_ROOT/md-advice.sh" "$SRC"
+
 NAME="$(basename "${SRC%.md}")"
 OUT="out/$NAME.pdf"
 mkdir -p out

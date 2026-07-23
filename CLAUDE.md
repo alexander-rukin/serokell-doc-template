@@ -86,6 +86,15 @@ is worse than no cover page. If they do not give you one, build without a cover.
 A file that has a title but should still skip the cover can say `cover: false`
 in its frontmatter.
 
+## Build hints are advice, not gates
+
+`md-advice.sh` runs on every build and prints `hint:` lines for silent authoring
+mistakes (emoji, which render as empty boxes; adjacent `Label:` lines, which
+merge into one paragraph; repeated generic headings). It always exits 0.
+
+Deliver the PDF first, then mention what you saw and offer to fix it. Never
+rewrite the author's content unasked, and if they say it was deliberate, drop it.
+
 ## Everything else lives in the Markdown
 
 Content questions ("add a section", "make this a table", "insert an image") are

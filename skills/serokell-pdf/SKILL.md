@@ -67,6 +67,34 @@ Do you want a title, author, and date, or shall I build it as is?"
 A document that has a title but should still skip the cover can set
 `cover: false` in its frontmatter.
 
+## Build hints, and how to handle them
+
+The build prints `hint:` lines for common authoring mistakes that are otherwise
+invisible until someone reads the finished PDF. They never stop the build.
+
+**Advise, do not enforce.** Build the document, deliver the PDF, then mention
+what you noticed in a sentence or two and offer to fix it. Do not rewrite the
+author's text unasked, do not withhold the PDF, and if they say they meant it,
+drop it and do not raise it again for that document.
+
+Two cases deserve a mention even without a hint, because the author usually
+cannot see them coming:
+
+- **Emoji render as empty boxes.** The bundled fonts carry no emoji glyphs and
+  the build ignores system fonts. This one is worth stating plainly, since the
+  output is visibly broken rather than merely suboptimal. A bold `**Label:**`
+  gives the same visual anchor at the start of a line.
+- **Adjacent lines merge into one paragraph.** A stack of `Location:` /
+  `Work:` / `Languages:` lines becomes a single run-on block. A blank line
+  between them is the whole fix. This is almost never intended, so it is worth
+  raising every time.
+
+If asked how to make a plain document look richer, reach for what the template
+already has before suggesting anything else: bold labels at the start of a line,
+a `>` block as a callout with an accent rule, a table for anything genuinely
+tabular, and headings named after what they cover rather than repeated generic
+words like "Project".
+
 ## Markdown that is supported
 
 Headings, bold and italic, bullet and numbered lists, blockquotes, inline code,
