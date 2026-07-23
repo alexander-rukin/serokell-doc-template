@@ -41,8 +41,29 @@
 #let H  = 142.875mm
 #let MX = 22mm
 
+// ---- type scale (single source of truth for sizes) --------------------------
+// A modular-ish scale so every layout draws from the same set instead of ad-hoc
+// point sizes. Change the scale here and the whole deck follows.
+#let fs-mega    = 78pt   // section divider number
+#let fs-display = 62pt   // hero figure / stat number
+#let fs-hero    = 34pt   // cover title
+#let fs-h1      = 30pt   // statement, section title, closing
+#let fs-quote   = 26pt   // pull quote
+#let fs-h2      = 23pt   // content-slide heading (head)
+#let fs-h3      = 19pt   // stat caption
+#let fs-lead    = 15pt   // lead line under a heading
+#let fs-body    = 14pt   // default body
+#let fs-small   = 13pt   // secondary body / column text
+#let fs-caption = 10.5pt // meta / captions
+
+// ---- brand accent tick + readable measure -----------------------------------
+#let bar-w = 16mm        // the red accent bar - one width everywhere
+#let bar-h = 3pt         // one thickness everywhere
+#let accent-bar = box(width: bar-w, height: bar-h, fill: accent)
+#let MEASURE = 172mm     // cap long-form line length (~65-75 chars) for readability
+
 // ---- base text --------------------------------------------------------------
-#set text(font: font-body, size: 14pt, fill: ink, lang: "ru")
+#set text(font: font-body, size: fs-body, fill: ink, lang: "ru")
 #set par(leading: 0.6em)
 
 // ---- brand artwork (bookends) -----------------------------------------------
@@ -66,9 +87,9 @@
 )
 
 #let head(title) = {
-  box(width: 16mm, height: 3pt, fill: accent)
+  accent-bar
   v(5mm)
-  text(font: font-heading, size: 23pt, weight: "bold", fill: ink, title)
+  text(font: font-heading, size: fs-h2, weight: "bold", fill: ink, title)
   v(7mm)
 }
 
@@ -104,56 +125,58 @@
 
 // 1. Cover - deck opener (bookend artwork, no footer).
 #let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(mtop: 26mm, mbot: 0mm, x: 20mm, tag: tag, foot: false, {
-  box(width: 18mm, height: 3.5pt, fill: accent)
+  accent-bar
   v(9mm)
-  text(font: font-display, size: 34pt, weight: "semibold", fill: ink)[#par(leading: 0.3em, justify: false, title)]
+  text(font: font-display, size: fs-hero, weight: "semibold", fill: ink)[#par(leading: 0.3em, justify: false, box(width: MEASURE, title))]
   if subtitle != none {
     v(6mm)
-    text(font: font-heading, size: 15pt, weight: "regular", fill: ink-soft)[#par(leading: 0.5em, justify: false, subtitle)]
+    text(font: font-heading, size: fs-lead, weight: "regular", fill: ink-soft)[#par(leading: 0.5em, justify: false, box(width: MEASURE, subtitle))]
   }
   if meta != none {
     v(5mm)
-    text(font: font-body, size: 10.5pt, fill: ink-soft, meta)
+    text(font: font-body, size: fs-caption, fill: ink-soft, meta)
   }
   art-band(peak: 40mm, x: 20mm)
 })
 
 // 2. Section divider - big number + section title.
 #let section(no, title, tag: none) = slide-raw(mtop: 34mm, tag: tag, {
-  text(font: font-display, size: 78pt, weight: "black", fill: accent,
+  text(font: font-display, size: fs-mega, weight: "black", fill: accent,
     top-edge: "cap-height", bottom-edge: "baseline", no)
   v(9mm)
-  text(font: font-heading, size: 30pt, weight: "bold", fill: ink, title)
+  text(font: font-heading, size: fs-h1, weight: "bold", fill: ink, title)
 })
 
 // 3. Statement - one big sentence.
 #let statement(body, sub: none, tag: none) = slide-raw(mtop: 30mm, tag: tag, {
-  box(width: 16mm, height: 3.5pt, fill: accent)
+  accent-bar
   v(9mm)
-  text(font: font-heading, size: 32pt, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, body)]
+  text(font: font-heading, size: fs-h1, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, box(width: MEASURE, body))]
   if sub != none {
     v(7mm)
-    text(font: font-body, size: 13.5pt, fill: ink-soft)[#par(leading: 0.5em, justify: false, sub)]
+    text(font: font-body, size: fs-small, fill: ink-soft)[#par(leading: 0.5em, justify: false, box(width: MEASURE, sub))]
   }
 })
 
 // 4. Bullets - heading + list, with an optional lead line.
 #let bullets(title, items, lead: none, tag: none) = slide-raw(tag: tag, {
   head(title)
-  if lead != none {
-    text(size: 13.5pt, fill: ink-soft, lead)
-    v(6mm)
-  }
-  set text(size: 14pt)
-  bullet-list(items)
+  box(width: MEASURE, {
+    if lead != none {
+      text(size: fs-small, fill: ink-soft, lead)
+      v(6mm)
+    }
+    set text(size: fs-body)
+    bullet-list(items)
+  })
 })
 
 // 5. Two columns of text.
 #let two-col(title, left, right, tag: none) = slide-raw(tag: tag, {
   head(title)
   grid(columns: (1fr, 1fr), column-gutter: 12mm, align: top,
-    text(size: 13.5pt, fill: ink, left),
-    text(size: 13.5pt, fill: ink, right))
+    text(size: fs-small, fill: ink, left),
+    text(size: fs-small, fill: ink, right))
 })
 
 // 6. Split - text left, a visual panel right (image, or a labelled placeholder).
@@ -163,7 +186,7 @@
   // reads as a balanced panel on the slide rather than hanging from the text top.
   v(1fr)
   grid(columns: (1fr, 96mm), column-gutter: 12mm, align: horizon,
-    text(size: 13.5pt, fill: ink, body),
+    text(size: fs-small, fill: ink, body),
     box(width: 100%, height: 74mm, radius: 4pt, clip: true,
       fill: if img == none { panel-bg } else { none },
       stroke: if img == none { (left: 2pt + accent) } else { none },
@@ -180,25 +203,25 @@
 
 // 7. Stat - one huge accent number.
 #let stat(number, caption, sub: none, tag: none) = slide-raw(mtop: 30mm, tag: tag, {
-  box(width: 16mm, height: 3.5pt, fill: accent)
+  accent-bar
   v(10mm)
   box(height: 26mm, align(bottom,
-    text(font: font-display, size: 62pt, weight: "black", fill: accent, number)))
+    text(font: font-display, size: fs-display, weight: "black", fill: accent, number)))
   v(9mm)
-  text(font: font-heading, size: 19pt, weight: "bold", fill: ink, caption)
+  text(font: font-heading, size: fs-h3, weight: "bold", fill: ink, caption)
   if sub != none {
     v(5mm)
-    text(font: font-body, size: 12.5pt, fill: ink-soft, sub)
+    text(font: font-body, size: fs-small, fill: ink-soft, box(width: MEASURE, sub))
   }
 })
 
 // 8. Quote - pull quote with an accent spine.
 #let quote-slide(body, who: none, tag: none) = slide-raw(mtop: 30mm, tag: tag, {
   block(stroke: (left: 3pt + accent), inset: (left: 10mm, y: 2mm), {
-    text(font: font-heading, size: 26pt, weight: "medium", fill: ink)[#par(leading: 0.36em, justify: false)[«#body»]]
+    text(font: font-heading, size: fs-quote, weight: "medium", fill: ink)[#par(leading: 0.36em, justify: false)[#box(width: MEASURE)[«#body»]]]
     if who != none {
       v(7mm)
-      text(font: font-body, size: 12pt, weight: "semibold", fill: ink-soft, who)
+      text(font: font-body, size: fs-small, weight: "semibold", fill: ink-soft, who)
     }
   })
 })
@@ -272,12 +295,12 @@
 
 // 13. Closing - final statement over the artwork (bookend, no footer).
 #let closing(body, sub: none, tag: none) = slide-raw(mtop: 30mm, mbot: 0mm, tag: tag, foot: false, {
-  box(width: 16mm, height: 3.5pt, fill: accent)
+  accent-bar
   v(9mm)
-  text(font: font-heading, size: 30pt, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, body)]
+  text(font: font-heading, size: fs-h1, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, box(width: MEASURE, body))]
   if sub != none {
     v(7mm)
-    text(font: font-body, size: 13.5pt, fill: ink-soft)[#par(leading: 0.5em, justify: false, sub)]
+    text(font: font-body, size: fs-small, fill: ink-soft)[#par(leading: 0.5em, justify: false, box(width: MEASURE, sub))]
   }
   art-band(peak: 42mm)
 })
