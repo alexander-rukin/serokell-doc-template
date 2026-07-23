@@ -126,16 +126,14 @@ Ordinary Markdown, all of it styled by the template:
 
 ### Emoji
 
-Emoji work and render **monochrome**, as line icons that inherit the text
-colour, because the bundled fallback is Noto Emoji rather than a colour font.
-That keeps them in step with the restrained palette instead of dropping coloured
-stickers into a client document.
+Emoji work and render in **colour**, because Noto Color Emoji is bundled as a
+fallback. The COLRv1 (vector) build is used, so they stay sharp at any size in
+print. Apple Color Emoji is not bundled: its licence does not allow
+redistribution.
 
 ```markdown
 🎓 **Education:** PhD in Computer Science
 ```
-
-Flags render as a letter pair in a box, which is that font's convention.
 
 ### Tables
 
@@ -219,9 +217,9 @@ All of it lives in `template.typ`, at the top of the file:
 ```typst
 #let accent = rgb("#D92B04")     // Serokell red
 #let ink    = rgb("#1A1A1A")     // body text
-#let font-body    = ("Google Sans Flex 24pt", "Noto Emoji")
-#let font-heading = ("Google Sans Flex 36pt", "Noto Emoji")
-#let font-display = ("Google Sans Flex 120pt", "Noto Emoji")
+#let font-body    = ("Google Sans Flex 24pt", "Noto Color Emoji")
+#let font-heading = ("Google Sans Flex 36pt", "Noto Color Emoji")
+#let font-display = ("Google Sans Flex 120pt", "Noto Color Emoji")
 #let page-margin  = (top: 24mm, bottom: 44mm, x: 20mm)
 ```
 
