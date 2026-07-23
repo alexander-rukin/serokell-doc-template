@@ -45,17 +45,16 @@
 #set text(font: font-body, size: 14pt, fill: ink, lang: "ru")
 #set par(leading: 0.6em)
 
-// ---- brand artwork (bookends only) ------------------------------------------
-// Light: the white-veiled mountain range with the Serokell mark.
-// Dark:  the range would need a white veil, so instead a large faint mark.
-#let art-band(peak: 40mm, x: MX) = if dark {
-  place(bottom + right, dy: -12mm, box(image(mark-img, height: 20mm)))
-} else {
-  place(bottom + left, dx: -x, box(width: W, height: peak, {
-    place(bottom + left,  image("assets/footer-mountains-left.png",  width: W))
-    place(bottom + right, image("assets/footer-mountains-right.png", height: peak))
-  }))
-}
+// ---- brand artwork (bookends) -----------------------------------------------
+// The mountain range with the Serokell mark, veiled into the page background so
+// the top fades away. The veil colour is the theme background, so it works on
+// both light and dark.
+#let art-band(peak: 44mm, x: MX) = place(bottom + left, dx: -x, box(width: W, height: peak, {
+  place(bottom + left,  image("assets/footer-mountains-left.png",  width: W))
+  place(bottom + right, image("assets/footer-mountains-right.png", height: peak))
+  place(bottom + left, rect(width: W, height: peak, fill: gradient.linear(
+    (bg, 0%), (bg, 30%), (bg.transparentize(100%), 100%), angle: 90deg)))
+}))
 
 // ---- shared pieces ----------------------------------------------------------
 #let mono(s) = box(fill: code-bg, inset: (x: 3pt, y: 1pt), radius: 2pt,
@@ -73,12 +72,13 @@
   v(7mm)
 }
 
-// Footer: small Serokell mark on the left, slide number on the right.
+// Footer: slide number on the left, the Serokell mark on the right - the mark
+// sits in the same corner and at the same size as on the cover artwork.
 #let deck-footer = context {
   let n = counter(page).get().first()
   grid(columns: (1fr, 1fr),
-    align(left + horizon, box(image(mark-img, height: 4.6mm))),
-    align(right + horizon, text(font: font-body, size: 9pt, weight: "medium", fill: ink-soft, str(n))))
+    align(left + horizon, text(font: font-body, size: 9pt, weight: "medium", fill: ink-soft, str(n))),
+    align(right + horizon, box(image(mark-img, height: 5.6mm))))
 }
 
 // The single page primitive every layout builds on.
@@ -159,9 +159,12 @@
 // 6. Split - text left, a visual panel right (image, or a labelled placeholder).
 #let split(title, body, img: none, label: none, tag: none) = slide-raw(tag: tag, {
   head(title)
-  grid(columns: (1fr, 96mm), column-gutter: 12mm, align: top,
+  // Centre the text + visual block in the space below the heading, so the image
+  // reads as a balanced panel on the slide rather than hanging from the text top.
+  v(1fr)
+  grid(columns: (1fr, 96mm), column-gutter: 12mm, align: horizon,
     text(size: 13.5pt, fill: ink, body),
-    box(width: 100%, height: 70mm, radius: 4pt, clip: true,
+    box(width: 100%, height: 74mm, radius: 4pt, clip: true,
       fill: if img == none { panel-bg } else { none },
       stroke: if img == none { (left: 2pt + accent) } else { none },
       {
@@ -172,6 +175,7 @@
             if label != none { label } else { [визуал] }))
         }
       }))
+  v(1fr)
 })
 
 // 7. Stat - one huge accent number.
@@ -238,7 +242,8 @@
   }
   let cells = ()
   for (i, it) in items.enumerate() {
-    cells.push(box(width: 100%, fill: code-bg, radius: 4pt, stroke: (top: 2pt + accent), inset: (x: 11pt, y: 12pt), {
+    // Fixed height so every step box is the same size regardless of text length.
+    cells.push(box(width: 100%, height: 46mm, fill: code-bg, radius: 4pt, stroke: (top: 2pt + accent), inset: (x: 11pt, y: 12pt), {
       text(font: font-display, size: 22pt, weight: "black", fill: accent, str(i + 1))
       v(4pt)
       text(size: 12pt, fill: ink, it)

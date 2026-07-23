@@ -25,11 +25,11 @@ Serokell mark). A deck is therefore itself an example of the house style.
 
 - **Cyrillic** renders in a bundled Golos Text fallback (Google Sans Flex is
   Latin-only, so Russian without it drops to a serif). Latin stays Google Sans.
-- **Footer**: every slide except cover/closing shows a small Serokell mark (left)
-  and the slide number (right).
+- **Footer**: every slide except cover/closing shows the slide number (left) and
+  a small Serokell mark (right, same corner and size as the cover artwork mark).
 - **Themes**: light (default) or dark - `theme: dark` in deck.md frontmatter, or
-  `--input theme=dark` for a raw build. Dark swaps the palette and replaces the
-  bookend mountains with a large faint mark.
+  `--input theme=dark` for a raw build. Dark swaps the palette; the bookend
+  mountains stay in both themes, veiled into the page background (light or dark).
 
 ## Files
 

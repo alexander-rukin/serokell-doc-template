@@ -41,8 +41,8 @@ Plain prose here becomes the body.
 - Text is literal - write single hyphens, arrows like `->`, parentheses freely.
   (Inline markdown bold/italic is not interpreted in v1.)
 - Cyrillic renders in the bundled Golos Text (Latin stays Google Sans Flex).
-- Every slide except the cover/closing carries a footer: small Serokell mark
-  left, slide number right. Set `theme: dark` for the dark palette.
+- Every slide except the cover/closing carries a footer: slide number left,
+  small Serokell mark right. Set `theme: dark` for the dark palette.
 
 ## Layouts and their fields
 
