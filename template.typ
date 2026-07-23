@@ -311,11 +311,14 @@
   // clear the body's own paragraph spacing (~3.4mm) or a heading ends up closer
   // to its text than two paragraphs are to each other. The gap below is kept
   // generous so a heading reads as attached to the section it opens, not
-  // floating midway between two. Adjacent weak spacing collapses to the larger of the
-  // two, so an H1 directly followed by an H2 stays at the H2's gap-above rather
-  // than summing.
+  // floating midway between two. The gap above still has to stay clearly larger
+  // than the gap below, or the heading drifts to the midpoint and stops
+  // grouping with its own section; H1 opens a major break, so its gap above is
+  // larger than H2's. Adjacent weak spacing collapses to the larger of the two,
+  // so an H1 directly followed by an H2 stays at the H2's gap-above rather than
+  // summing.
   show heading.where(level: 1): it => {
-    v(9mm, weak: true)
+    v(11mm, weak: true)
     block(text(size: 20pt, weight: "bold", it.body))
     v(7mm, weak: true)
   }
