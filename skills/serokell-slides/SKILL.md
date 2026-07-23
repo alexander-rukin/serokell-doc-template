@@ -28,8 +28,12 @@ Serokell mark). A deck is therefore itself an example of the house style.
 - **Footer**: every slide except cover/closing shows the slide number (left) and
   a small Serokell mark (right, same corner and size as the cover artwork mark).
 - **Themes**: light (default) or dark - `theme: dark` in deck.md frontmatter, or
-  `--input theme=dark` for a raw build. Dark swaps the palette; the bookend
-  mountains stay in both themes, veiled into the page background (light or dark).
+  `--input theme=dark` for a raw build. The mountain artwork is a single B&W
+  photo; the theme only changes the **background** it sits on. On light, brand
+  clouds veil the base ("забеливание") and the range shows taller (low-contrast
+  grey on white); on dark it sits as a low band, kept clear of the text. Either
+  way the range is drawn as a background layer so the headline always sits on
+  clean page colour.
 
 ## Files
 
@@ -42,8 +46,10 @@ Serokell mark). A deck is therefore itself an example of the house style.
 - `gallery.typ` - a demo deck, one slide per layout, faint mono corner tag
   naming each. Render it to see the whole visual vocabulary.
 
-All depend on the doc-template's `assets/` (the two `footer-mountains-*.png` and
-`assets/fonts/`). Work from a checkout of `serokell-doc-template`.
+All depend on the doc-template's `assets/`: the brand mountains
+(`brand-mountains.png` range, `brand-clouds.png` veil, `brand-peak.png` single
+summit), the theme marks (`serokell-mark-{light,dark}.png`) and `assets/fonts/`.
+Work from a checkout of `serokell-doc-template`.
 
 ## Build (author path - preferred)
 

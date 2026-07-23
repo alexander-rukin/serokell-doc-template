@@ -67,15 +67,30 @@
 #set par(leading: 0.6em)
 
 // ---- brand artwork (bookends) -----------------------------------------------
-// The mountain range with the Serokell mark, veiled into the page background so
-// the top fades away. The veil colour is the theme background, so it works on
-// both light and dark.
-#let art-band(peak: 44mm, x: MX) = place(bottom + left, dx: -x, box(width: W, height: peak, {
-  place(bottom + left,  image("assets/footer-mountains-left.png",  width: W))
-  place(bottom + right, image("assets/footer-mountains-right.png", height: peak))
-  place(bottom + left, rect(width: W, height: peak, fill: gradient.linear(
-    (bg, 0%), (bg, 30%), (bg.transparentize(100%), 100%), angle: 90deg)))
-}))
+// The real B&W Serokell mountain range, anchored full-width to the slide bottom.
+// The peak is monochrome; the THEME only changes the background it sits on. The
+// upper part of the range is washed back into the page colour (a theme-aware
+// veil) so only a crisp band remains at the foot of the slide - no art ever
+// climbs into the headline. On the light theme, brand clouds veil the very base
+// ("забеливание") so the range dissolves softly into the page.
+#let art-band(peak: 44mm, x: MX) = {
+  // Light: the range is low-contrast grey on white, so it may show taller (and
+  // the white clouds веаль the base) without hurting the dark text. Dark: the
+  // range is bright against the page, so keep it a low band clear of the text.
+  let crisp = if dark { peak } else { peak + 16mm }
+  let fade = 18mm
+  // percentages measured from the TOP of the slide (0% = top, 100% = bottom)
+  let p-solid = (H - crisp - fade) / H * 100%  // fully page-colour above here
+  let p-clear = (H - crisp) / H * 100%         // crisp band begins here
+  place(bottom + left, dx: -x, image("assets/brand-mountains.png", width: W))
+  if not dark {
+    place(bottom + left, dx: -x, image("assets/brand-clouds.png", width: W))
+  }
+  place(bottom + left, dx: -x, rect(width: W, height: H, fill: gradient.linear(
+    (bg, 0%), (bg, p-solid),
+    (bg.transparentize(100%), p-clear), (bg.transparentize(100%), 100%),
+    angle: 90deg)))
+}
 
 // ---- shared pieces ----------------------------------------------------------
 #let mono(s) = box(fill: code-bg, inset: (x: 3pt, y: 1pt), radius: 2pt,
@@ -125,6 +140,7 @@
 
 // 1. Cover - deck opener (bookend artwork, no footer).
 #let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(mtop: 26mm, mbot: 0mm, x: 20mm, tag: tag, foot: false, {
+  art-band(peak: 24mm, x: 20mm)   // background: drawn first so text sits on top
   accent-bar
   v(9mm)
   text(font: font-display, size: fs-hero, weight: "semibold", fill: ink)[#par(leading: 0.3em, justify: false, box(width: MEASURE, title))]
@@ -136,7 +152,7 @@
     v(5mm)
     text(font: font-body, size: fs-caption, fill: ink-soft, meta)
   }
-  art-band(peak: 40mm, x: 20mm)
+  place(bottom + right, dx: MX - 20mm, dy: -10mm, box(image(mark-img, height: 5.6mm)))
 })
 
 // 2. Section divider - big number + section title.
@@ -295,6 +311,7 @@
 
 // 13. Closing - final statement over the artwork (bookend, no footer).
 #let closing(body, sub: none, tag: none) = slide-raw(mtop: 30mm, mbot: 0mm, tag: tag, foot: false, {
+  art-band(peak: 26mm)   // background: drawn first so text sits on top
   accent-bar
   v(9mm)
   text(font: font-heading, size: fs-h1, weight: "bold", fill: ink)[#par(leading: 0.32em, justify: false, box(width: MEASURE, body))]
@@ -302,5 +319,5 @@
     v(7mm)
     text(font: font-body, size: fs-small, fill: ink-soft)[#par(leading: 0.5em, justify: false, box(width: MEASURE, sub))]
   }
-  art-band(peak: 42mm)
+  place(bottom + right, dy: -10mm, box(image(mark-img, height: 5.6mm)))
 })
