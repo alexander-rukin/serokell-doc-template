@@ -13,10 +13,15 @@
 
 // Google Sans Flex ships as per-optical-size families. Picking the family
 // chooses the optical size; `weight` chooses the cut.
-#let font-display = "Google Sans Flex 120pt" // cover title only
-#let font-heading = "Google Sans Flex 36pt" // h1-h3
-#let font-body = "Google Sans Flex 24pt" // body copy
-#let font-mono = "JetBrains Mono" // code
+// Each face is a fallback list ending in Noto Emoji, so an emoji typed anywhere
+// in the Markdown resolves to a glyph instead of an empty box. Noto Emoji is the
+// monochrome cut on purpose: colour emoji would fight the restrained red-on-near
+// -black palette, while these read as line icons and inherit the text colour.
+#let font-emoji = "Noto Emoji"
+#let font-display = ("Google Sans Flex 120pt", font-emoji) // cover title only
+#let font-heading = ("Google Sans Flex 36pt", font-emoji) // h1-h3
+#let font-body = ("Google Sans Flex 24pt", font-emoji) // body copy
+#let font-mono = ("JetBrains Mono", font-emoji) // code
 
 #let size-body = 10.5pt
 #let leading-body = 0.72em

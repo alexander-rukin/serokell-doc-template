@@ -89,8 +89,8 @@ in its frontmatter.
 ## Build hints are advice, not gates
 
 `md-advice.sh` runs on every build and prints `hint:` lines for silent authoring
-mistakes (emoji, which render as empty boxes; adjacent `Label:` lines, which
-merge into one paragraph; repeated generic headings). It always exits 0.
+mistakes (adjacent `Label:` lines, which merge into one paragraph; repeated
+generic headings). It always exits 0.
 
 Deliver the PDF first, then mention what you saw and offer to fix it. Never
 rewrite the author's content unasked, and if they say it was deliberate, drop it.
@@ -133,6 +133,10 @@ Real bugs that were hit and fixed here. Do not re-derive them.
   at full size behind the text and whitened by a gradient painted over the
   photo. The photo is never made semi-transparent, or the page shows through the
   rock.
+- **Emoji need a fallback font.** Noto Emoji (monochrome) is bundled and every
+  face in `template.typ` is a fallback list ending in it. Without that, emoji
+  render as empty boxes, because the build ignores system fonts. The monochrome
+  cut is deliberate: colour emoji fight the palette.
 - **`art-logo-centre` is measured from the source PNG** (the mark occupies rows
   773..835 of 940). The page number is aligned to that line. Replacing
   `footer-mountains-right.png` means re-measuring it.

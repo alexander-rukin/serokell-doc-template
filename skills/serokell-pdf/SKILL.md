@@ -80,10 +80,11 @@ drop it and do not raise it again for that document.
 Two cases deserve a mention even without a hint, because the author usually
 cannot see them coming:
 
-- **Emoji render as empty boxes.** The bundled fonts carry no emoji glyphs and
-  the build ignores system fonts. This one is worth stating plainly, since the
-  output is visibly broken rather than merely suboptimal. A bold `**Label:**`
-  gives the same visual anchor at the start of a line.
+- **Emoji are supported and render monochrome.** Noto Emoji is bundled as a
+  fallback, so an emoji typed anywhere resolves to a line-art glyph that
+  inherits the text colour rather than a coloured sticker. Flags come out as a
+  letter pair in a box, which is that font's convention. Do not warn about
+  emoji, and do not strip them from an author's text.
 - **Adjacent lines merge into one paragraph.** A stack of `Location:` /
   `Work:` / `Languages:` lines becomes a single run-on block. A blank line
   between them is the whole fix. This is almost never intended, so it is worth

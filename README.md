@@ -104,9 +104,8 @@ can say `cover: false`.
 ### Build hints
 
 Every build runs a few advisory checks on your Markdown and prints `hint:` lines
-for things that are easy to get wrong and hard to spot afterwards: emoji (which
-render as empty boxes, since the bundled fonts have no emoji glyphs), adjacent
-`Label: value` lines (which Markdown merges into one paragraph), and repeated
+for things that are easy to get wrong and hard to spot afterwards: adjacent
+`Label: value` lines (which Markdown merges into one paragraph) and repeated
 generic headings. They are suggestions only and never stop the build.
 
 ### What's supported
@@ -124,6 +123,19 @@ Ordinary Markdown, all of it styled by the template:
 | pipe tables | Clean table, hairline rules, no boxes ([see below](#tables)) |
 | `![alt](diagram.svg)` | Full-width image |
 | `[text](url)` | Accent-coloured link |
+
+### Emoji
+
+Emoji work and render **monochrome**, as line icons that inherit the text
+colour, because the bundled fallback is Noto Emoji rather than a colour font.
+That keeps them in step with the restrained palette instead of dropping coloured
+stickers into a client document.
+
+```markdown
+🎓 **Education:** PhD in Computer Science
+```
+
+Flags render as a letter pair in a box, which is that font's convention.
 
 ### Tables
 
@@ -207,9 +219,9 @@ All of it lives in `template.typ`, at the top of the file:
 ```typst
 #let accent = rgb("#D92B04")     // Serokell red
 #let ink    = rgb("#1A1A1A")     // body text
-#let font-body    = "Google Sans Flex 24pt"
-#let font-heading = "Google Sans Flex 36pt"
-#let font-display = "Google Sans Flex 120pt"
+#let font-body    = ("Google Sans Flex 24pt", "Noto Emoji")
+#let font-heading = ("Google Sans Flex 36pt", "Noto Emoji")
+#let font-display = ("Google Sans Flex 120pt", "Noto Emoji")
 #let page-margin  = (top: 24mm, bottom: 44mm, x: 20mm)
 ```
 
