@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "serokell-docs",
-      "description": "Turn Markdown into branded Serokell PDFs. Bundles the house template, fonts, and artwork; the author only writes Markdown.",
+      "description": "Turn Markdown into branded Serokell PDFs, including candidate profiles. Bundles the house template, fonts, artwork, and colour emoji; the author only writes Markdown.",
       "category": "productivity",
       "source": "./",
       "homepage": "https://github.com/alexander-rukin/serokell-doc-template"
