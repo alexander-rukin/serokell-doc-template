@@ -48,7 +48,9 @@ tables: full
 
 ## Northwind Bank
 
-**Role:** Backend Lead &nbsp;&nbsp; **Stack:** Haskell, PostgreSQL
+**Role:** Backend Lead
+
+**Stack:** Haskell, PostgreSQL
 
 **Overview:** One or two sentences on what the engagement was and what the
 person owned.
@@ -81,13 +83,11 @@ These are what make the page look considered rather than like a text dump.
 - **The project heading is the client name**, so do not repeat it as a
   `**Client:**` line underneath. Saying it twice is noise, and it is what pushes
   the metadata line long enough to wrap.
-- **Role and stack go on one line**, separated by `&nbsp;&nbsp;`. Repeating a
-  three-line label column under every project turns the page into a staircase;
-  one dense strip per project keeps the vertical space for actual content.
-- **If that line would still wrap, put each label on its own line instead.** A
-  wrapped metadata line loses its structure: the tail of one field runs onto the
-  next line with no indent and the reader cannot tell where a field ends. Two or
-  three short values fit; five do not.
+- **Every `**Label:**` gets its own line, everywhere in the document.** That
+  includes role and stack under a project heading, not just the header block.
+  One rule with no exceptions: packing two labels onto a line saves a couple of
+  lines, does not change the page count in practice, and costs the consistency
+  of having every label start a line.
 - Emoji are supported and render in colour if they want them, but bold labels
   usually read better in a client-facing document.
 
