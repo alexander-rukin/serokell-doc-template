@@ -27,7 +27,7 @@ cover: false
 
 ## Northwind Bank
 
-**Role:** Backend Lead &nbsp;&nbsp; **Client:** Northwind Bank &nbsp;&nbsp; **Stack:** Haskell, PostgreSQL
+**Role:** Backend Lead &nbsp;&nbsp; **Stack:** Haskell, PostgreSQL
 
 **Overview:** Owned the ledger service behind a retail payments platform, taking it from a single-region deployment to an active-active setup across two data centres.
 
@@ -39,7 +39,7 @@ cover: false
 
 ## A European telecom operator
 
-**Role:** Senior Engineer &nbsp;&nbsp; **Client:** Anonymised &nbsp;&nbsp; **Stack:** Rust, Kafka
+**Role:** Senior Engineer &nbsp;&nbsp; **Stack:** Rust, Kafka
 
 **Overview:** Built the event ingestion layer for a network telemetry product, handling bursty traffic from several hundred thousand devices.
 
@@ -50,7 +50,7 @@ cover: false
 
 ## Open-source: reproducible builds
 
-**Role:** Maintainer &nbsp;&nbsp; **Client:** Community project &nbsp;&nbsp; **Stack:** Nix
+**Role:** Maintainer &nbsp;&nbsp; **Stack:** Nix
 
 **Overview:** Maintains a widely used set of Nix overlays for pinning Haskell toolchains.
 
