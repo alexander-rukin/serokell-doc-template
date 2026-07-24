@@ -34,6 +34,34 @@ If you use Claude Code, you do not have to clone this at all. Install it once:
 /plugin install serokell-docs@serokell-docs
 ```
 
+Add `autoUpdate` so you pick up new versions without thinking about it. In
+`~/.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "serokell-docs": {
+      "source": { "source": "github", "repo": "alexander-rukin/serokell-doc-template" },
+      "autoUpdate": true
+    }
+  }
+}
+```
+
+Without that flag nothing checks for a newer version, and you stay on whatever
+you installed. To update by hand instead:
+
+```bash
+claude plugin marketplace update serokell-docs
+```
+
+If the version in `claude plugin list` does not move, reinstall: the marketplace
+manifest refreshes, but the cached plugin files do not always follow.
+
+```bash
+claude plugin uninstall serokell-docs@serokell-docs && claude plugin install serokell-docs@serokell-docs
+```
+
 After that you can ask for a PDF from any folder on your machine, and the
 document does not have to live in `content/`:
 
