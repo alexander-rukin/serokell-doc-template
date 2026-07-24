@@ -40,6 +40,11 @@ Or do all of that with one command, which also turns on automatic updates:
 curl -fsSL https://raw.githubusercontent.com/alexander-rukin/serokell-doc-template/main/install.sh | bash
 ```
 
+That installs Typst too if you do not have it, using Homebrew when it is already
+there and otherwise downloading the official static binary into `~/.local/bin`.
+It never installs Homebrew itself and never asks for sudo. Pass `SKIP_TYPST=1`
+to handle Typst yourself.
+
 The CLI has no flag for automatic updates, so the script writes `autoUpdate`
 into `~/.claude/settings.json` for you. It backs the file up first, only adds
 that one key, and is safe to run again. Without it nothing checks for a newer
