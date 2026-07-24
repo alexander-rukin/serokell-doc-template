@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1
+
+**One label per line, with no exceptions.** Role and stack used to share a line
+under a project heading while the header block above put every label on its own
+line, which was two rules in one document. Measured on a real profile the packed
+line saved a couple of lines and did not change the page count, and the rule it
+needed ("split it if it would wrap") asked the model to predict rendered line
+length, which it cannot do reliably.
+
 ## 0.3.0
 
 **One-command install.** `install.sh` registers the marketplace, installs the
