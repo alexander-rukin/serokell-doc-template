@@ -1,7 +1,7 @@
 {
   "name": "serokell-docs",
   "description": "Turn Markdown into branded Serokell PDFs, including candidate profiles. Bundles the house template, fonts, artwork, and colour emoji; the author only writes Markdown.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "author": {
     "name": "Serokell OÜ"
   },

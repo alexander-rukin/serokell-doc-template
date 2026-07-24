@@ -13,6 +13,8 @@ REPO="alexander-rukin/serokell-doc-template"
 MARKET="serokell-docs"
 PLUGIN="serokell-docs@serokell-docs"
 SETTINGS="$HOME/.claude/settings.json"
+# Version the template is developed against; used only for the direct download.
+TYPST_VERSION="v0.15.1"
 
 say() { printf '\n%s\n' "$*"; }
 
@@ -23,10 +25,62 @@ command -v claude >/dev/null 2>&1 || {
   exit 1
 }
 
-if ! command -v typst >/dev/null 2>&1; then
-  say "note: Typst is not installed. The plugin needs it to build PDFs."
-  echo "  macOS:  brew install typst"
-  echo "  other:  https://github.com/typst/typst#installation"
+install_typst() {
+  # Prefer Homebrew when it is already there: it owns PATH and future upgrades.
+  # Never install Homebrew itself, that is a much bigger change than this script
+  # should make on someone's machine.
+  if command -v brew >/dev/null 2>&1; then
+    echo "  installing with Homebrew..."
+    brew install typst >/dev/null
+    return
+  fi
+
+  # Otherwise fetch the official static binary. No package manager, no sudo.
+  local os arch target url tmp
+  case "$(uname -s)" in
+    Darwin) os="apple-darwin" ;;
+    Linux)  os="unknown-linux-musl" ;;
+    *) echo "  cannot auto-install on $(uname -s)." >&2; return 1 ;;
+  esac
+  case "$(uname -m)" in
+    arm64|aarch64) arch="aarch64" ;;
+    x86_64|amd64)  arch="x86_64" ;;
+    *) echo "  cannot auto-install for $(uname -m)." >&2; return 1 ;;
+  esac
+  target="typst-${arch}-${os}"
+  url="https://github.com/typst/typst/releases/download/${TYPST_VERSION}/${target}.tar.xz"
+
+  echo "  downloading ${TYPST_VERSION} for ${arch} ${os}..."
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' RETURN
+  curl -fsSL "$url" | tar -xJ -C "$tmp" || { echo "  download failed" >&2; return 1; }
+  mkdir -p "$HOME/.local/bin"
+  mv "$tmp/$target/typst" "$HOME/.local/bin/typst"
+  chmod +x "$HOME/.local/bin/typst"
+  echo "  installed to ~/.local/bin/typst"
+  # Check the PATH the user actually has, before we prepend to it for this run.
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) echo "  ~/.local/bin is not on your PATH. Add this to your shell profile:"
+       echo "    export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
+  esac
+  export PATH="$HOME/.local/bin:$PATH"
+}
+
+if command -v typst >/dev/null 2>&1; then
+  say "Typst is already installed ($(typst --version 2>/dev/null | head -1))."
+elif [ "${SKIP_TYPST:-}" = "1" ]; then
+  say "Skipping Typst as asked. The plugin cannot build PDFs without it."
+else
+  say "Typst is missing. The plugin needs it to build PDFs, installing now."
+  echo "  (re-run with SKIP_TYPST=1 to handle it yourself)"
+  if install_typst && command -v typst >/dev/null 2>&1; then
+    echo "  ready: $(typst --version 2>/dev/null | head -1)"
+  else
+    echo "  could not install it automatically. Do it by hand:" >&2
+    echo "    macOS:  brew install typst" >&2
+    echo "    other:  https://github.com/typst/typst#installation" >&2
+  fi
 fi
 
 # --- marketplace ------------------------------------------------------------

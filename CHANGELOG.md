@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0
+
+**The installer sets up Typst as well.** It used to print instructions and leave
+you to it, which meant the one-command install was not actually one command. It
+now uses Homebrew when that is already present, and otherwise downloads the
+official static binary into `~/.local/bin`. It never installs Homebrew itself
+and never asks for sudo, since putting a package manager on someone's machine is
+a much larger change than this script should make. `SKIP_TYPST=1` opts out.
+
 ## 0.3.1
 
 **One label per line, with no exceptions.** Role and stack used to share a line
