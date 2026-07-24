@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+**One-command install.** `install.sh` registers the marketplace, installs the
+plugin, and turns on automatic updates. The Claude CLI has no flag for that last
+part, so the script writes the setting itself; it backs the settings file up
+first, touches only that one key, and can be run again safely.
+
 ## 0.2.1
 
 **Project metadata no longer repeats the client.** The project heading already
