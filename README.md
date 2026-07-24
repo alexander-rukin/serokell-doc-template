@@ -34,22 +34,18 @@ If you use Claude Code, you do not have to clone this at all. Install it once:
 /plugin install serokell-docs@serokell-docs
 ```
 
-Add `autoUpdate` so you pick up new versions without thinking about it. In
-`~/.claude/settings.json`:
+Or do all of that with one command, which also turns on automatic updates:
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "serokell-docs": {
-      "source": { "source": "github", "repo": "alexander-rukin/serokell-doc-template" },
-      "autoUpdate": true
-    }
-  }
-}
+```bash
+curl -fsSL https://raw.githubusercontent.com/alexander-rukin/serokell-doc-template/main/install.sh | bash
 ```
 
-Without that flag nothing checks for a newer version, and you stay on whatever
-you installed. To update by hand instead:
+The CLI has no flag for automatic updates, so the script writes `autoUpdate`
+into `~/.claude/settings.json` for you. It backs the file up first, only adds
+that one key, and is safe to run again. Without it nothing checks for a newer
+version and you stay on whatever you installed.
+
+To update by hand instead:
 
 ```bash
 claude plugin marketplace update serokell-docs
