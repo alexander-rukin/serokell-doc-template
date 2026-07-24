@@ -48,7 +48,7 @@ tables: full
 
 ## Northwind Bank
 
-**Role:** Backend Lead &nbsp;&nbsp; **Client:** Northwind Bank &nbsp;&nbsp; **Stack:** Haskell, PostgreSQL
+**Role:** Backend Lead &nbsp;&nbsp; **Stack:** Haskell, PostgreSQL
 
 **Overview:** One or two sentences on what the engagement was and what the
 person owned.
@@ -78,7 +78,16 @@ These are what make the page look considered rather than like a text dump.
   renders as a block with an accent rule and breaks up the page.
 - **Use a table only for genuinely tabular data**, such as client, focus and
   status across several rows. A table of one column is worse than a list.
-- **Role, client and stack go on one line**, separated by `&nbsp;&nbsp;`.
+- **The project heading is the client name**, so do not repeat it as a
+  `**Client:**` line underneath. Saying it twice is noise, and it is what pushes
+  the metadata line long enough to wrap.
+- **Role and stack go on one line**, separated by `&nbsp;&nbsp;`. Repeating a
+  three-line label column under every project turns the page into a staircase;
+  one dense strip per project keeps the vertical space for actual content.
+- **If that line would still wrap, put each label on its own line instead.** A
+  wrapped metadata line loses its structure: the tail of one field runs onto the
+  next line with no indent and the reader cannot tell where a field ends. Two or
+  three short values fit; five do not.
 - Emoji are supported and render in colour if they want them, but bold labels
   usually read better in a client-facing document.
 
@@ -104,11 +113,11 @@ first. Do not turn an approximate statement into a precise one: if the notes say
 
 ## Anonymising a client
 
-Client names are often under NDA. If asked to anonymise, replace the name
-consistently in both the heading and the `**Client:**` line, and describe the
-client by sector and scale instead: `## A European telecom operator`. Keep the
-work description intact; it is the client identity that is sensitive, not the
-engineering.
+Client names are often under NDA. If asked to anonymise, describe the client by
+sector and scale in the heading instead of naming them:
+`## A European telecom operator`. Since the heading carries the client, there is
+no second place to remember to change. Keep the work description intact; it is
+the client identity that is sensitive, not the engineering.
 
 ## Building
 

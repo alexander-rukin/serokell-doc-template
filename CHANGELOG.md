@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+**Project metadata no longer repeats the client.** The project heading already
+names the client, so a `Client:` line underneath said the same thing twice and
+pushed the metadata line long enough to wrap, which loses its structure. The
+line now carries role and stack only, and the skill says to fall back to one
+label per line if it would still wrap.
+
 ## 0.2.0
 
 **Emoji now work, in colour.** Noto Color Emoji is bundled as a fallback on
