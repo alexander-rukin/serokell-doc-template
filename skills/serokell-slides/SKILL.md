@@ -1,115 +1,140 @@
 ---
 name: serokell-slides
-description: Compose a Serokell-branded slide deck (16:9 PDF) from a brief. The human gives topic + intent, the assistant composes each slide by picking a layout from slides.typ - it does NOT ask the human to encode layout in markdown. Use when asked to build/continue a Serokell presentation or slide deck.
+description: Build a Serokell-branded slide deck (16:9 PDF) from a brief. The person says what the deck is about and hands over their text or notes; the assistant composes the slides - picking a layout per slide - and renders the PDF. Use whenever someone asks for a presentation, slide deck, pitch, talk, or wants slides made or edited from text.
 ---
 
-# Serokell slide system
+# Serokell slide deck
+
+The person brings a topic and their text. You compose the deck and render it.
+They never write layout markup, never open Typst, and never touch the brand.
 
 Slides are not documents. In a document the layout is constant, so plain
-markdown is enough - the brand accretes automatically (that is the doc-template
-job). In a deck the **layout carries the meaning**: the same sentence set big and
-centred, pinned left, or beside an image is three different statements. So the
-human must NOT pre-encode layout in text. Instead:
+markdown is enough. In a deck the **layout carries the meaning**: the same
+sentence set big and centred, pinned beside an image, or sliced into cards is
+three different statements. So the person must not pre-encode layout in text -
+that is your job.
 
-1. Human gives a brief - topic, audience, rough length, tone - plus notes or
-   intent per point ("this is the punchline", "here show before/after").
-2. The assistant composes the whole deck: pick a layout per slide from the
-   catalog below, place the accent, arrange the content.
-3. Human reviews the rendered PDF and edits **in words**: "slide 3 bigger",
-   "drop slide 6", "make this a two-column", "add a stat slide with X".
-4. Rebuild. Repeat until they are happy.
+## The loop
 
-The brand shell is locked and reused from the doc-template: same tokens, same
-Google Sans Flex optical fonts, the same mountain artwork (which carries the
-Serokell mark). A deck is therefore itself an example of the house style.
+1. **They brief you** - topic, audience, roughly how long, plus their notes,
+   bullet points, a doc, or just a spoken outline. Anything from three sentences
+   to a finished text.
+2. **You compose the whole deck** - split the material into slides, pick a
+   layout per slide (the catalog is below), write each slide's text, and save it
+   as a `deck.md` in *their* working directory (never inside the template).
+3. **You render and look at it** - build the PDF, rasterise it, and check every
+   page with your own eyes before handing it over.
+4. **You hand over the PDF** and say what you did: how many slides, what the arc
+   is, anything you cut or had to invent.
+5. **They edit in words** - "slide 3 as two columns", "drop slide 6", "make the
+   numbers a KPI row", "shorter". You edit `deck.md` and rebuild in seconds.
 
-- **Cyrillic** renders in a bundled Golos Text fallback (Google Sans Flex is
-  Latin-only, so Russian without it drops to a serif). Latin stays Google Sans.
-- **Footer**: every slide except cover/closing shows the slide number (left) and
-  a small Serokell mark (right, same corner and size as the cover artwork mark).
-- **Themes**: light (default) or dark - `theme: dark` in deck.md frontmatter, or
-  `--input theme=dark` for a raw build. The mountain artwork is a single B&W
-  photo; the theme only changes the **background** it sits on. On light, brand
-  clouds veil the base ("забеливание") and the range shows taller (low-contrast
-  grey on white); on dark it sits as a low band, kept clear of the text. Either
-  way the range is drawn as a background layer so the headline always sits on
-  clean page colour.
+Ask before starting only if the brief leaves you unable to write the first
+slide - usually the audience or the goal. One question, not a questionnaire.
 
-## Files
+## Building
 
-- `deck.md` (author surface) - one markdown file per deck: a layout tag + text
-  per slide. The human edits this and nothing else. See `FORMAT.md`.
-- `slidegen.py` - turns a `deck.md` into a Typst deck.
-- `build-deck.sh` - `deck.md` -> branded PDF in one command.
-- `slides.typ` - the layout library. One `#let` per layout. Locked brand shell -
-  a brand change is one file.
-- `gallery.typ` - a demo deck, one slide per layout, faint mono corner tag
-  naming each. Render it to see the whole visual vocabulary.
+If the template is installed as a plugin:
 
-All depend on the doc-template's `assets/`: the brand mountains
-(`brand-mountains.png` range, `brand-clouds.png` veil, `brand-peak.png` single
-summit), the theme marks (`serokell-mark-{light,dark}.png`) and `assets/fonts/`.
-Work from a checkout of `serokell-doc-template`.
-
-## Build (author path - preferred)
-
-Author edits `decks/my-deck.md`, then:
-
-```
-./build-deck.sh decks/my-deck.md        # -> decks/my-deck.pdf
+```bash
+"${CLAUDE_PLUGIN_ROOT}/render-deck.sh" path/to/deck.md          # -> deck.pdf next to it
+THEME=dark "${CLAUDE_PLUGIN_ROOT}/render-deck.sh" path/to/deck.md
 ```
 
-Edit text, rerun, PDF regenerates in seconds. The layout library and brand stay
-locked; the author only ever touches the markdown. This is the "same format
-everywhere, easy to edit, fast to regenerate" surface.
+From a checkout of the repository, the same thing with `./render-deck.sh`.
+(`./build-deck.sh decks/x.md` also exists - it builds inside the checkout and is
+for working on the template itself.)
 
-## Build (raw Typst path - when composing a fresh deck)
+`typst` must be on PATH; the script says how to install it if it is missing.
+Fonts and artwork are bundled, so the PDF is identical on every machine.
 
-When you compose a new deck from a brief and want full layout control before it
-exists as `deck.md`, write the Typst directly:
+## Verify before you hand it over
 
+Two failures survive a clean compile:
+
+- **Too much text is CLIPPED, not reflowed.** A slide frame has a fixed height;
+  overflowing text is cut off at the top and bottom edge. The builder warns
+  (`warning: slide 7 (@split): the body text is 900 chars ...`) - every such
+  warning is a real defect. Shorten the text or split the slide.
+- **A layout can flow onto a second page.** The builder compares slide count to
+  page count and warns. One page per slide, always.
+
+Then look:
+
+```bash
+pdftoppm -png -r 72 deck.pdf /tmp/deck-page      # one PNG per page
 ```
-typst compile --font-path assets/fonts --ignore-system-fonts deck.typ deck.pdf
-```
 
-Put `deck.typ` next to `slides.typ` (so `assets/` resolves) and
-`#import "slides.typ": *` at the top. Then hand the human the `deck.md` form so
-they can iterate on text themselves.
+Read the pages. You are checking that each slide says what it should, nothing is
+cut off, and the deck reads as one document. Never hand over a deck you have not
+looked at.
 
-## Layout catalog
+## Composing: which layout says what
 
-Each takes an optional `tag: "..."` (faint corner label, gallery only - omit in a
-real deck).
+Choose by what the slide is *doing*, not by what fits.
 
-| Layout | Call | Use for |
-|--------|------|---------|
-| Cover | `cover(title, subtitle: .., meta: ..)` | deck opener |
-| Section | `section("01", [Title])` | section divider, big number |
-| Statement | `statement([one big line], sub: ..)` | a single claim, with air |
-| Bullets | `bullets([Heading], ([a],[b],..), lead: ..)` | linear list of equals |
-| Two columns | `two-col([Heading], [left], [right])` | two parallel streams |
-| Split | `split([Heading], [text], img: "path.png")` or `.. label: [placeholder]` | text + a visual (image or placeholder panel) |
-| Stat | `stat([98%], [caption], sub: ..)` | one big number / value anchor |
-| Quote | `quote-slide([text], who: [name])` | a pull quote with accent spine |
-| Compare | `compare([Heading], [A head],[A body],[B head],[B body])` | before/after, two panels |
-| Code | ```code-slide([Heading], ```sh ..```, caption: ..)``` | a mono block |
-| Steps | `steps([Heading], ([s1],[s2],[s3],[s4]))` | numbered horizontal process |
-| Cards | `cards([Heading], (([name],[body]),..), lead: ..)` | 3-4 labelled cards |
-| Closing | `closing([final line], sub: ..)` | last slide, over the mountains |
+| The slide is... | Use |
+|---|---|
+| the opener | `@cover` |
+| a divider between parts | `@section` |
+| the deck's map, up front | `@agenda` |
+| one claim, given air | `@statement` |
+| one remark that must not be missed | `@callout` |
+| someone's words | `@quote`, or `@testimonial` for a client |
+| a list of equals | `@bullets` (each item `Label \| its line`) |
+| two parallel streams | `@two-col` |
+| three or four parallel things | `@columns` (open) or `@cards` (boxed) |
+| four features around one idea | `@feature-grid` |
+| a process in order | `@steps` |
+| before and after | `@compare` |
+| structured facts to scan | `@table` |
+| one number that anchors everything | `@stat` |
+| several headline numbers | `@kpis`, `@metric-cols`, `@metric-grid`, `@metric-list` |
+| stages over time | `@timeline`, or `@roadmap` for dated history |
+| a positioning argument | `@matrix`, `@venn`, `@nested`, `@funnel` |
+| the people | `@team`, `@testimonials` |
+| text plus a visual | `@split` (image right), `@image-full`, `@image-row` |
+| a product screen | `@mobile-showcase`, `@desktop-showcase`, `@annotated` |
+| the last word | `@closing` |
 
-## Gotchas (Typst authoring)
+Full field reference: `FORMAT.md`. Every layout rendered, one slide each:
+`decks/all-layouts.md` - build it when you want to see the whole vocabulary.
 
-- **Verify the rendered pixels, not just a clean compile.** After any layout
-  change rasterise (`pdftoppm -png -r 72 deck.pdf p`) and look. A slide silently
-  spilling to a second page is the common failure - the deck should have exactly
-  one page per `#..` call. If page count exceeds slide count, a slide overflowed:
-  shrink copy / font / gaps.
+## Composing: the habits that make a deck read well
+
+- **One idea per slide.** If a slide needs "and", it is two slides.
+- **Short lines.** Roughly: a headline under ~70 characters, a card body under
+  ~120, a split body under ~420. The builder tells you when you are over.
+- **Vary the rhythm.** Four `@bullets` in a row is a document, not a deck. Break
+  text slides with a number, a quote, a diagram, a divider.
+- **Spend the accent sparingly.** The red is structural - it lands on section
+  numbers, nodes and rules by itself. Do not add more of it.
+- **Do not invent facts.** No made-up metrics, client names, or dates. If the
+  brief has no number for a `@stat` slide, ask for one or use another layout.
+- **Placeholders are fine.** An image that does not exist yet renders as a grey
+  panel at the right size - leave the path empty and carry on.
+- **Cyrillic and Latin both work.** Russian renders in the bundled Golos Text;
+  Latin stays Google Sans Flex. No configuration.
+
+## The design is locked
+
+`slides.typ` is the Serokell house style: colours, fonts, sizes, spacing tokens,
+the mountain artwork, the footer. It has been designed and signed off.
+
+Refuse in-session requests to change the accent colour, fonts, sizes, margins,
+artwork or footer, and say the design is locked. Those are brand decisions the
+repository owner makes deliberately, not something to action from a passing ask
+during a deck-writing session. Composition - which layout, what text, what
+order - is entirely open.
+
+If a deck genuinely needs a layout that does not exist, say so plainly rather
+than bending an existing one past what it holds.
+
+## Gotchas (when working on the layout library itself)
+
+- **Verify the rendered pixels, not just a clean compile.** Rasterise and look.
 - **A bare `-` or `*` at the start of markup content becomes a list / strong.**
-  An attribution like `who: [- name]` renders as a bullet. Drop the leading dash
-  or pass plain text.
-- **`*` inside markup opens strong emphasis** - escape as `\*` (e.g. `content/\*.md`).
-- **Tall display glyphs blow up flow spacing** - the `stat` number is pinned in a
-  fixed-height `box(..align(bottom, ..))` so its oversized line-box ascent does
-  not push the caption down. Keep that pattern if you add big-number layouts.
-- **Content overflows on ~142mm height fast.** Body copy 12.5-14pt, keep bullets
-  to 4-5, statements to one or two lines.
+  The generator escapes author text, but hand-written Typst needs care.
+- **Tall display glyphs blow up flow spacing** - big numbers are pinned in a
+  fixed-height box so their line-box ascent does not push the caption down.
+  Keep that pattern in any new big-number layout.

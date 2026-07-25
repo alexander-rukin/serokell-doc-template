@@ -68,6 +68,40 @@ build does not depend on what is installed on your machine.
 
 ---
 
+## Slide decks
+
+The same repository also builds branded 16:9 slide decks. A deck is one markdown
+file: a layout tag plus text per slide.
+
+The intended way to make one is to ask Claude Code, with the plugin installed:
+
+> Make a deck about our smart-contract audit process, about 15 minutes, for a
+> client. Here are my notes: ...
+
+Claude splits the material into slides, picks a layout for each one (there are
+37 of them - lists, cards, numbers, timelines, diagrams, device mockups), writes
+the `deck.md` next to your notes, renders the PDF and shows it to you. After
+that you edit in words - "slide 3 as two columns", "drop slide 6" - and it
+rebuilds in seconds. You never pick layouts by hand and never open Typst.
+
+To build a deck file directly:
+
+```bash
+./render-deck.sh ~/talks/kickoff.md              # -> ~/talks/kickoff.pdf
+THEME=dark ./render-deck.sh ~/talks/kickoff.md   # dark palette
+```
+
+Like `render.sh`, it takes a file from anywhere and never writes inside the
+template directory. The builder warns when a slide has more text than its layout
+holds (overflowing text is clipped, not reflowed) and when the page count stops
+matching the slide count.
+
+- `FORMAT.md` - the deck.md reference: every layout, its fields, its items.
+- `decks/all-layouts.md` - one slide per layout; build it to see the vocabulary.
+- `slides.typ` - the layout library and the locked brand shell.
+
+---
+
 ## Writing a document
 
 Drop a `.md` file into `content/` and build it by name:

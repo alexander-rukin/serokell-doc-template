@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 slidegen.py - turn an author-friendly deck.md into a Typst deck that uses the
-Serokell slide layout library (slides.typ), then that compiles to a branded PDF.
+Serokell slide layout library (slides.typ), which compiles to a branded PDF.
 
 The author edits ONE markdown file: per-slide layout tag + plain text. No Typst,
 no layout code. Run build-deck.sh to regenerate the PDF in seconds.
@@ -10,7 +10,7 @@ Usage:  python3 slidegen.py deck.md  >  _deck.typ
 
 Format (see FORMAT.md):
   ---                      # optional deck frontmatter (key: value)
-  theme: serokell
+  theme: dark
   ---
 
   @cover                   # a slide starts with @<layout> [key=value ...]
@@ -21,25 +21,29 @@ Format (see FORMAT.md):
   @bullets
   # Heading
   lead: optional lead line
-  - first point            # '- ' -> list item
-  - second point
+  - Label | supporting text   # '- ' -> item; ' | ' splits an item into parts
+  - Another | line
 
   @split image=assets/x.png
   # Heading
   Body paragraph goes here as plain prose.
 
-Layouts: cover, section, statement, bullets, two-col, split, stat, quote,
-compare, code, steps, cards, closing.
+Every layout in slides.typ that is a real slide has a tag here; see LAYOUTS.
 """
 import sys, re
 
+# Field names recognised as `key: value`. Anything else stays body prose.
 KNOWN_KEYS = {
-    "title","subtitle","meta","sub","lead","caption","who","number",
-    "image","label","no","left","right","a","b","body",
+    "title", "subtitle", "meta", "sub", "lead", "caption", "who", "name", "loc",
+    "number", "image", "label", "left", "right", "a", "b", "body", "desc",
+    "head", "x", "y", "no",
 }
 
+
+# ---------------------------------------------------------------- text helpers
+
 def esc(s):
-    """Escape Typst markup-significant chars so author text is literal."""
+    """Escape Typst markup-significant chars so author text stays literal."""
     if s is None:
         return ""
     s = s.replace("\\", "\\\\")
@@ -47,14 +51,37 @@ def esc(s):
         s = s.replace(ch, "\\" + ch)
     return s
 
+
 def content(s):
-    """Author text -> a Typst content literal [ ... ], blank lines -> paragraphs."""
-    parts = [p.strip() for p in re.split(r"\n\s*\n", s.strip()) if p.strip()]
+    """Author text -> a Typst content literal [ ... ]; blank line -> paragraph."""
+    parts = [p.strip() for p in re.split(r"\n\s*\n", (s or "").strip()) if p.strip()]
     body = "\n\n".join(esc(p).replace("\n", " \\\n") for p in parts)
     return "[" + body + "]"
 
+
+def path_lit(p):
+    """A file path as a Typst string literal."""
+    p = (p or "").strip().strip('"')
+    if '"' in p or "\\" in p:
+        die('image path must not contain quotes or backslashes: %s' % p)
+    return '"' + p + '"'
+
+
+def arr(items):
+    """Typst array literal; a 1-element array needs a trailing comma."""
+    inner = ", ".join(items)
+    if len(items) == 1:
+        inner += ","
+    return "(" + inner + ")"
+
+
+def die(msg):
+    raise SystemExit("deck.md: " + msg)
+
+
+# ---------------------------------------------------------------- deck parsing
+
 def split_slides(text):
-    # strip optional frontmatter
     fm = {}
     m = re.match(r"\s*---\s*\n(.*?)\n---\s*\n", text, re.S)
     if m:
@@ -63,8 +90,7 @@ def split_slides(text):
                 k, v = ln.split(":", 1)
                 fm[k.strip()] = v.strip()
         text = text[m.end():]
-    # split on lines beginning with @layout
-    chunks = re.split(r"(?m)^@(?=\w)", text)
+    chunks = re.split(r"(?m)^@(?=[\w-])", text)
     slides = []
     for ch in chunks:
         ch = ch.strip("\n")
@@ -81,8 +107,9 @@ def split_slides(text):
         slides.append((layout, opts, rest))
     return fm, slides
 
+
 def parse_block(rest):
-    """Pull headline (#), fields (key:), bullets (-), code fence, and body prose."""
+    """Pull headline (#), fields (key:), items (-), a code fence and body prose."""
     f = {"title": None, "items": [], "quote": [], "body": [], "fields": {}, "code": None}
     lines = rest.splitlines()
     i = 0
@@ -96,7 +123,8 @@ def parse_block(rest):
             while i < len(lines) and not lines[i].strip().startswith("```"):
                 buf.append(lines[i]); i += 1
             f["code"] = (lang, "\n".join(buf))
-            i += 1; continue
+            i += 1
+            continue
         if s.startswith("# "):
             f["title"] = s[2:].strip()
         elif s.startswith("> "):
@@ -113,109 +141,473 @@ def parse_block(rest):
     f["body"] = "\n".join(f["body"]).strip()
     return f
 
+
 def field(f, name, default=None):
     return f["fields"].get(name, default)
 
-def cells(items):
-    """'- HEAD | BODY' -> list of (head, body) pairs."""
+
+# ------------------------------------------------------- item shape validation
+
+def parts(item, n, layout, shape):
+    """Split '- a | b | c' into exactly n parts, or explain what was expected."""
+    got = [p.strip() for p in item.split("|")]
+    if len(got) < n:
+        die("@%s: item %r needs %d parts separated by ' | ' (%s)" % (layout, item, n, shape))
+    if len(got) > n:                       # extra pipes fold into the last part
+        got = got[: n - 1] + [" | ".join(got[n - 1:])]
+    return got
+
+
+def need_items(f, layout, lo, hi=None):
+    n = len(f["items"])
+    if n < lo or (hi is not None and n > hi):
+        want = "%d" % lo if hi == lo else ("%d-%d" % (lo, hi) if hi else "at least %d" % lo)
+        die("@%s expects %s items ('- ...' lines), got %d" % (layout, want, n))
+    return f["items"]
+
+
+def need_field(f, layout, key):
+    v = field(f, key)
+    if v is None:
+        die("@%s needs a '%s:' line" % (layout, key))
+    return v
+
+
+def pair_list(f, layout, n, shape, lo=1, hi=None):
+    return arr([
+        "(" + ", ".join(content(p) for p in parts(it, n, layout, shape)) + ")"
+        for it in need_items(f, layout, lo, hi)
+    ])
+
+
+# -------------------------------------------------------------- slide emitters
+# Each takes (layout, opts, f) and returns one Typst call.
+
+def _cover(layout, opts, f):
+    args = [content(field(f, "title", f["title"] or ""))]
+    sub = field(f, "subtitle", " ".join(f["quote"]).strip())
+    if sub:
+        args.append("subtitle: " + content(sub))
+    if field(f, "meta"):
+        args.append("meta: " + content(field(f, "meta")))
+    return "#cover(" + ", ".join(args) + ")"
+
+
+def _section(layout, opts, f):
+    if opts.get("no") or field(f, "no"):
+        print("note: @section no=.. is ignored - section slides carry no number",
+              file=sys.stderr)
+    return "#section(" + content(f["title"] or f["body"]) + ")"
+
+
+def _statement(layout, opts, f):
+    args = [content(f["title"] or f["body"])]
+    sub = field(f, "sub", " ".join(f["quote"]).strip())
+    if sub:
+        args.append("sub: " + content(sub))
+    return "#statement(" + ", ".join(args) + ")"
+
+
+def _closing(layout, opts, f):
+    args = [content(f["title"] or f["body"])]
+    if field(f, "sub"):
+        args.append("sub: " + content(field(f, "sub")))
+    return "#closing(" + ", ".join(args) + ")"
+
+
+def _callout(layout, opts, f):
+    args = [content(f["title"] or f["body"])]
+    if field(f, "sub"):
+        args.append("sub: " + content(field(f, "sub")))
+    return "#callout(" + ", ".join(args) + ")"
+
+
+def _bullets(layout, opts, f):
     out = []
-    for it in items:
+    for it in need_items(f, layout, 1):
         if "|" in it:
-            a, b = it.split("|", 1)
-            out.append((a.strip(), b.strip()))
+            a, b = parts(it, 2, layout, "Label | text")
+            out.append("(" + content(a) + ", " + content(b) + ")")
         else:
-            out.append((it.strip(), ""))
-    return out
+            out.append(content(it))
+    args = [content(f["title"] or ""), arr(out)]
+    lead = field(f, "lead")
+    if lead:
+        args.append("lead: " + content(lead))
+    return "#bullets(" + ", ".join(args) + ")"
+
+
+def _two_col(layout, opts, f):
+    items = need_items(f, layout, 2, 2)
+    a = parts(items[0], 2, layout, "Label | text")
+    b = parts(items[1], 2, layout, "Label | text")
+    return "#two-col(%s, (%s, %s), (%s, %s))" % (
+        content(f["title"] or ""), content(a[0]), content(a[1]),
+        content(b[0]), content(b[1]))
+
+
+def _split(layout, opts, f):
+    args = [content(f["title"] or ""), content(f["body"])]
+    img = opts.get("image") or field(f, "image")
+    if img:
+        args.append("img: " + path_lit(img))
+    elif field(f, "label"):
+        args.append("label: " + content(field(f, "label")))
+    if opts.get("bleed") in ("1", "yes", "true"):
+        args.append("bleed: true")
+    return "#split(" + ", ".join(args) + ")"
+
+
+def _stat(layout, opts, f):
+    number = field(f, "number", f["title"] or "")
+    caption = field(f, "caption", f["body"] or " ".join(f["quote"]))
+    args = [content(number), content(caption)]
+    if field(f, "sub"):
+        args.append("sub: " + content(field(f, "sub")))
+    return "#stat(" + ", ".join(args) + ")"
+
+
+def _quote(layout, opts, f):
+    args = [content(f["title"] or " ".join(f["quote"]) or f["body"])]
+    if field(f, "who"):
+        args.append("who: " + content(field(f, "who")))
+    return "#quote-slide(" + ", ".join(args) + ")"
+
+
+def _compare(layout, opts, f):
+    items = need_items(f, layout, 2, 2)
+    a = parts(items[0], 2, layout, "HEAD | body")
+    b = parts(items[1], 2, layout, "HEAD | body")
+    return "#compare(%s, %s, %s, %s, %s)" % (
+        content(f["title"] or ""), content(a[0]), content(a[1]),
+        content(b[0]), content(b[1]))
+
+
+def _code(layout, opts, f):
+    lang, code = f["code"] or ("text", f["body"])
+    fence = "```" + lang + "\n" + code + "\n```"
+    args = [content(f["title"] or ""), "[" + fence + "]"]
+    caption = field(f, "caption")
+    if caption:
+        args.append("caption: " + content(caption))
+    return "#code-slide(" + ", ".join(args) + ")"
+
+
+def _steps(layout, opts, f):
+    items = arr([content(x) for x in need_items(f, layout, 2, 5)])
+    return "#steps(%s, %s)" % (content(f["title"] or ""), items)
+
+
+def _cards(layout, opts, f):
+    args = [content(f["title"] or ""),
+            pair_list(f, layout, 2, "NAME | body", 2, 4)]
+    if field(f, "lead"):
+        args.append("lead: " + content(field(f, "lead")))
+    return "#cards(" + ", ".join(args) + ")"
+
+
+def _agenda(layout, opts, f):
+    items = arr([content(x) for x in need_items(f, layout, 2, 8)])
+    return "#agenda(%s, %s)" % (content(f["title"] or ""), items)
+
+
+def _kpis(layout, opts, f):
+    return "#kpis(%s, %s)" % (content(f["title"] or ""),
+                              pair_list(f, layout, 2, "98% | label", 2, 4))
+
+
+def _timeline(layout, opts, f):
+    return "#timeline(%s, %s)" % (content(f["title"] or ""),
+                                  pair_list(f, layout, 2, "Stage | description", 2, 5))
+
+
+def _table(layout, opts, f):
+    head = [h.strip() for h in need_field(f, layout, "head").split("|")]
+    rows = []
+    for it in need_items(f, layout, 1):
+        cells = parts(it, len(head), layout, " | ".join(head))
+        rows.append(arr([content(c) for c in cells]))
+    return "#table-slide(%s, %s, %s)" % (
+        content(f["title"] or ""), arr([content(h) for h in head]), arr(rows))
+
+
+def _matrix(layout, opts, f):
+    x = parts(need_field(f, layout, "x"), 2, layout, "left axis | right axis")
+    y = parts(need_field(f, layout, "y"), 2, layout, "top axis | bottom axis")
+    quads = need_items(f, layout, 4, 4)     # order: TL, TR, BL, BR
+    return "#matrix2x2(%s, %s, %s, %s, %s)" % (
+        content(f["title"] or ""), content(need_field(f, layout, "desc")),
+        arr([content(x[0]), content(x[1])]), arr([content(y[0]), content(y[1])]),
+        arr([content(q) for q in quads]))
+
+
+def _highlight(layout, opts, f):
+    label = f["title"] or field(f, "label")
+    if not label:
+        die("@highlight needs a '# label' line")
+    return "#highlight(%s, %s)" % (content(label), content(f["body"]))
+
+
+def _columns(layout, opts, f):
+    args = [content(f["title"] or ""),
+            pair_list(f, layout, 2, "Label | text", 2, 4)]
+    if field(f, "lead"):
+        args.append("lead: " + content(field(f, "lead")))
+    return "#columns(" + ", ".join(args) + ")"
+
+
+def _feature_grid(layout, opts, f):
+    args = [content(f["title"] or ""),
+            pair_list(f, layout, 2, "Label | text", 4, 4)]
+    if field(f, "lead"):
+        args.append("lead: " + content(field(f, "lead")))
+    return "#feature-grid(" + ", ".join(args) + ")"
+
+
+def _metric_list(layout, opts, f):
+    args = [content(f["title"] or ""),
+            pair_list(f, layout, 3, "40% | Label | description", 2, 4)]
+    if field(f, "lead"):
+        args.append("lead: " + content(field(f, "lead")))
+    return "#metric-list(" + ", ".join(args) + ")"
+
+
+def _metric_cols(layout, opts, f):
+    return "#metric-cols(%s, %s)" % (content(f["title"] or ""),
+                                     pair_list(f, layout, 2, "40% | paragraph", 2, 4))
+
+
+def _metric_grid(layout, opts, f):
+    return "#metric-grid(%s, %s, %s)" % (
+        content(f["title"] or ""), content(need_field(f, layout, "desc")),
+        pair_list(f, layout, 2, "40% | label", 4, 4))
+
+
+def _roadmap(layout, opts, f):
+    return "#roadmap(%s, %s)" % (content(f["title"] or ""),
+                                 pair_list(f, layout, 2, "Date | what happened", 3, 6))
+
+
+def _venn(layout, opts, f):
+    items = need_items(f, layout, 3, 3)
+    return "#venn(%s, %s, %s)" % (
+        content(f["title"] or ""), content(need_field(f, layout, "desc")),
+        arr([content(i) for i in items]))
+
+
+def _nested(layout, opts, f):
+    items = need_items(f, layout, 2, 4)
+    return "#nested(%s, %s, %s)" % (
+        content(f["title"] or ""), content(need_field(f, layout, "desc")),
+        arr([content(i) for i in items]))
+
+
+def _funnel(layout, opts, f):
+    items = need_items(f, layout, 3, 5)
+    return "#funnel(%s, %s, %s)" % (
+        content(f["title"] or ""), content(need_field(f, layout, "desc")),
+        arr([content(i) for i in items]))
+
+
+def _testimonial(layout, opts, f):
+    args = [content(f["title"] or " ".join(f["quote"]) or f["body"])]
+    if field(f, "name") or field(f, "who"):
+        args.append("name: " + content(field(f, "name", field(f, "who"))))
+    if field(f, "loc"):
+        args.append("loc: " + content(field(f, "loc")))
+    return "#testimonial(" + ", ".join(args) + ")"
+
+
+def _testimonials(layout, opts, f):
+    args = [pair_list(f, layout, 2, "quote | Name · Place", 2, 4)]
+    if opts.get("avatars") in ("0", "no", "false"):
+        args.append("avatars: false")
+    return "#testimonials(" + ", ".join(args) + ")"
+
+
+def _team(layout, opts, f):
+    args = [content(f["title"] or ""),
+            pair_list(f, layout, 2, "Name | role", 2, 12)]
+    if opts.get("perrow"):
+        args.append("perrow: " + str(int(opts["perrow"])))
+    return "#team(" + ", ".join(args) + ")"
+
+
+def _image_row(layout, opts, f):
+    cells = []
+    for it in need_items(f, layout, 2, 3):
+        img, lbl, desc = parts(it, 3, layout, "path.png | Label | description")
+        cells.append("(%s, %s, %s)" % (
+            path_lit(img) if img else "none", content(lbl), content(desc)))
+    return "#image-row(%s, %s)" % (content(f["title"] or ""), arr(cells))
+
+
+def _image_full(layout, opts, f):
+    args = []
+    img = opts.get("image") or field(f, "image")
+    if img:
+        args.append("img: " + path_lit(img))
+    caption = field(f, "caption", f["title"])
+    if caption:
+        args.append("caption: " + content(caption))
+    return "#image-full(" + ", ".join(args) + ")"
+
+
+def _mobile(layout, opts, f):
+    args = [content(f["title"] or ""), content(f["body"])]
+    if opts.get("n"):
+        args.append("n: " + str(int(opts["n"])))
+    return "#mobile-showcase(" + ", ".join(args) + ")"
+
+
+def _desktop(layout, opts, f):
+    return "#desktop-showcase(%s, %s)" % (content(f["title"] or ""), content(f["body"]))
+
+
+def _annotated(layout, opts, f):
+    notes = []
+    for it in need_items(f, layout, 1, 4):
+        side, y, label = parts(it, 3, layout, "left|right | 40 | Label")
+        if side not in ("left", "right"):
+            die("@annotated: side must be 'left' or 'right', got %r" % side)
+        notes.append('("%s", %s, %s)' % (side, float(y), content(label)))
+    args = []
+    if f["title"]:
+        args.append("title: " + content(f["title"]))
+    img = opts.get("image") or field(f, "image")
+    if img:
+        args.append("img: " + path_lit(img))
+    args.append("notes: " + arr(notes))
+    return "#annotated(" + ", ".join(args) + ")"
+
+
+LAYOUTS = {
+    # opener / closer / single-idea
+    "cover": _cover, "section": _section, "statement": _statement,
+    "closing": _closing, "callout": _callout, "quote": _quote,
+    "highlight": _highlight,
+    # lists and text structures
+    "bullets": _bullets, "two-col": _two_col, "columns": _columns,
+    "cards": _cards, "feature-grid": _feature_grid, "agenda": _agenda,
+    "steps": _steps, "compare": _compare, "table": _table, "code": _code,
+    # numbers
+    "stat": _stat, "kpis": _kpis, "metric-list": _metric_list,
+    "metric-cols": _metric_cols, "metric-grid": _metric_grid,
+    # diagrams / time
+    "timeline": _timeline, "roadmap": _roadmap, "matrix": _matrix,
+    "venn": _venn, "nested": _nested, "funnel": _funnel,
+    # people
+    "testimonial": _testimonial, "testimonials": _testimonials, "team": _team,
+    # visuals
+    "split": _split, "image-row": _image_row, "image-full": _image_full,
+    "mobile-showcase": _mobile, "desktop-showcase": _desktop,
+    "annotated": _annotated,
+}
+
+
+# --------------------------------------------------------------- length budget
+# A slide that gets too much text does NOT spill onto a second page - the frame
+# has a fixed height, so the text is silently CLIPPED at the top and bottom edge.
+# Nothing downstream can detect that, so the only real guard is refusing to write
+# more than the layout holds. These are the comfortable maxima, in characters;
+# going over is a warning, not an error (a slightly long line is usually fine,
+# double the budget is not).
+#   title/body   - the '# ...' headline and the prose body
+#   parts        - per-part budget for '- a | b | c' items
+LIMITS = {
+    "cover":            {"title": 60, "body": 0},
+    "section":          {"title": 60},
+    "statement":        {"title": 110},
+    "closing":          {"title": 90},
+    "callout":          {"title": 130},
+    "quote":            {"title": 200},
+    "highlight":        {"title": 40, "body": 340},
+    "bullets":          {"title": 70, "parts": (40, 90), "bare": 95},
+    "two-col":          {"title": 70, "parts": (30, 260)},
+    "columns":          {"title": 70, "parts": (30, 130)},
+    "cards":            {"title": 70, "parts": (24, 120)},
+    "feature-grid":     {"title": 60, "parts": (30, 120)},
+    "agenda":           {"title": 70, "parts": (60,)},
+    "steps":            {"title": 70, "parts": (110,)},
+    "compare":          {"title": 70, "parts": (24, 170)},
+    "table":            {"title": 70, "parts": (40, 40, 40, 40, 40)},
+    "stat":             {"title": 12},
+    "kpis":             {"title": 70, "parts": (8, 40)},
+    "metric-list":      {"title": 60, "parts": (8, 26, 90)},
+    "metric-cols":      {"title": 70, "parts": (8, 130)},
+    "metric-grid":      {"title": 60, "parts": (8, 30)},
+    "timeline":         {"title": 70, "parts": (22, 90)},
+    "roadmap":          {"title": 70, "parts": (14, 70)},
+    "matrix":           {"title": 60, "parts": (40,)},
+    "venn":             {"title": 60, "parts": (20,)},
+    "nested":           {"title": 60, "parts": (20,)},
+    "funnel":           {"title": 60, "parts": (30,)},
+    "testimonial":      {"title": 220},
+    "testimonials":     {"parts": (130, 34)},
+    "team":             {"title": 70, "parts": (20, 26)},
+    "split":            {"title": 70, "body": 420},
+    "image-row":        {"title": 70, "parts": (999, 24, 90)},
+    "image-full":       {"title": 90},
+    "mobile-showcase":  {"title": 60, "body": 260},
+    "desktop-showcase": {"title": 60, "body": 260},
+    "annotated":        {"title": 70, "parts": (8, 8, 26)},
+}
+
+
+def check_budget(n, layout, f):
+    lim = LIMITS.get(layout, {})
+
+    def warn(what, text, cap):
+        if cap and len(text) > cap:
+            print("warning: slide %d (@%s): %s is %d chars, the layout holds about %d "
+                  "- it will be clipped, shorten it or split the slide"
+                  % (n, layout, what, len(text), cap), file=sys.stderr)
+
+    if f["title"]:
+        warn("the '# ' headline", f["title"], lim.get("title"))
+    if f["body"]:
+        warn("the body text", f["body"], lim.get("body"))
+    caps = lim.get("parts")
+    if caps:
+        for it in f["items"]:
+            got = [p.strip() for p in it.split("|")]
+            # a bare one-line item (bullets accept those) is not a label - it gets
+            # the whole row, so judge it by the layout's bare budget
+            if len(got) == 1 and len(caps) > 1:
+                warn("item %r" % (got[0][:24] + ("..." if len(got[0]) > 24 else "")),
+                     got[0], lim.get("bare", max(caps)))
+                continue
+            for i, part in enumerate(got):
+                cap = caps[i] if i < len(caps) else caps[-1]
+                warn("item part %d (%r)" % (i + 1, part[:24] + ("..." if len(part) > 24 else "")),
+                     part, cap)
+
 
 def emit(layout, opts, f):
-    q = " ".join(f["quote"]).strip()
-    body = f["body"]
-    if layout == "cover":
-        args = [content(field(f, "title", f["title"] or ""))]
-        sub = field(f, "subtitle", q)
-        if sub: args.append("subtitle: " + content(sub))
-        if field(f, "meta"): args.append("meta: " + content(field(f, "meta")))
-        return "#cover(" + ", ".join(args) + ")"
-    if layout == "section":
-        no = opts.get("no") or field(f, "no", "01")
-        return f'#section({content(no)}, {content(f["title"] or "")})'
-    if layout == "statement":
-        args = [content(f["title"] or body)]
-        sub = field(f, "sub", q)
-        if sub: args.append("sub: " + content(sub))
-        return "#statement(" + ", ".join(args) + ")"
-    if layout == "closing":
-        args = [content(f["title"] or body)]
-        sub = field(f, "sub", q)
-        if sub: args.append("sub: " + content(sub))
-        return "#closing(" + ", ".join(args) + ")"
-    if layout == "bullets":
-        items = "(" + ", ".join(content(x) for x in f["items"]) + ("," if len(f["items"])==1 else "") + ")"
-        args = [content(f["title"] or ""), items]
-        lead = field(f, "lead", q)
-        if lead: args.append("lead: " + content(lead))
-        return "#bullets(" + ", ".join(args) + ")"
-    if layout == "steps":
-        items = "(" + ", ".join(content(x) for x in f["items"]) + ("," if len(f["items"])==1 else "") + ")"
-        return f'#steps({content(f["title"] or "")}, {items})'
-    if layout == "two-col":
-        left = field(f, "left")
-        right = field(f, "right")
-        if left is None or right is None:
-            paras = re.split(r"\n\s*\n", body.strip())
-            left = left or (paras[0] if paras else "")
-            right = right or (paras[1] if len(paras) > 1 else "")
-        return f'#two-col({content(f["title"] or "")}, {content(left)}, {content(right)})'
-    if layout == "split":
-        args = [content(f["title"] or ""), content(body)]
-        img = opts.get("image") or field(f, "image")
-        if img:
-            args.append('img: "' + img + '"')
-        elif field(f, "label"):
-            args.append("label: " + content(field(f, "label")))
-        return "#split(" + ", ".join(args) + ")"
-    if layout == "stat":
-        number = field(f, "number", f["title"] or "")
-        caption = field(f, "caption", body or q)
-        args = [content(number), content(caption)]
-        if field(f, "sub"): args.append("sub: " + content(field(f, "sub")))
-        return "#stat(" + ", ".join(args) + ")"
-    if layout == "quote":
-        args = [content(f["title"] or q or body)]
-        if field(f, "who"): args.append("who: " + content(field(f, "who")))
-        return "#quote-slide(" + ", ".join(args) + ")"
-    if layout == "compare":
-        cs = cells(f["items"])
-        (ah, ab) = cs[0] if len(cs) > 0 else ("", "")
-        (bh, bb) = cs[1] if len(cs) > 1 else ("", "")
-        return (f'#compare({content(f["title"] or "")}, '
-                f'{content(ah)}, {content(ab)}, {content(bh)}, {content(bb)})')
-    if layout == "cards":
-        cs = cells(f["items"])
-        arr = "(" + ", ".join("(" + content(h) + ", " + content(b) + ")" for h, b in cs) + ("," if len(cs)==1 else "") + ")"
-        args = [content(f["title"] or ""), arr]
-        if field(f, "lead"): args.append("lead: " + content(field(f, "lead")))
-        return "#cards(" + ", ".join(args) + ")"
-    if layout == "code":
-        lang, code = f["code"] or ("text", body)
-        caption = field(f, "caption", q)
-        fence = "```" + lang + "\n" + code + "\n```"
-        args = [content(f["title"] or ""), "[" + fence + "]"]
-        if caption: args.append("caption: " + content(caption))
-        return "#code-slide(" + ", ".join(args) + ")"
-    raise SystemExit(f"unknown layout: @{layout}")
+    fn = LAYOUTS.get(layout)
+    if fn is None:
+        die("unknown layout @%s. Known: %s" % (layout, ", ".join(sorted(LAYOUTS))))
+    return fn(layout, opts, f)
+
 
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage: slidegen.py deck.md > _deck.typ")
     text = open(sys.argv[1], encoding="utf-8").read()
     fm, slides = split_slides(text)
+    if not slides:
+        die("no slides found - every slide starts with a line like '@cover'")
     out = ['#import "slides.typ": *', ""]
-    for layout, opts, rest in slides:
+    for n, (layout, opts, rest) in enumerate(slides, 1):
         f = parse_block(rest)
-        out.append(emit(layout, opts, f))
+        try:
+            check_budget(n, layout, f)
+            out.append(emit(layout, opts, f))
+        except SystemExit as e:
+            raise SystemExit("slide %d (@%s): %s" % (n, layout, str(e).replace("deck.md: ", "")))
         out.append("")
     sys.stdout.write("\n".join(out))
+
 
 if __name__ == "__main__":
     main()
