@@ -1,6 +1,7 @@
 # Serokell document template
 
-Turn a plain Markdown file into a branded Serokell PDF.
+Turn a plain Markdown file into a branded Serokell PDF: documents, candidate
+profiles, and 16:9 slide decks.
 
 You write Markdown. You do not write, read, or edit any Typst.
 
@@ -14,123 +15,88 @@ brew install typst          # macOS
 #   other platforms: https://github.com/typst/typst#installation
 
 # 2. Clone and build the example
-git clone <this-repo> && cd serokell-doc-template
+git clone https://github.com/alexander-rukin/serokell-doc-template
+cd serokell-doc-template
 ./build.sh example-proposal
 ```
 
 That writes `out/example-proposal.pdf`. If it works, you are set up.
 
-The **first** build downloads the pinned `cmarker` package (~136 KB) from the
-Typst package registry, so it needs network access once. Every build after that
-is fully offline - fonts and artwork are committed to the repo, and nothing is
-read from your system font directory.
+The **first** build downloads the pinned `cmarker` package
+(`@preview/cmarker:0.1.8`, ~136 KB) from the Typst package registry, so it
+needs network access once. Every build after that is fully offline - fonts and
+artwork are committed to the repo, and nothing is read from your system font
+directory.
 
-### Or install it as a Claude Code plugin
+If you use Claude Code, you do not have to clone anything - see
+[the Claude Code plugin](#the-claude-code-plugin).
 
-If you use Claude Code, you do not have to clone this at all. Install it once:
+---
+
+## The Claude Code plugin
+
+The same repository is packaged as a Claude Code plugin. With it installed you
+do not clone or build by hand - you ask for the PDF.
+
+### Installing
 
 ```
 /plugin marketplace add alexander-rukin/serokell-doc-template
 /plugin install serokell-docs@serokell-docs
 ```
 
-Or do all of that with one command, which also turns on automatic updates:
+Or do all of that with one command, which also installs Typst if it is missing
+and turns on automatic updates:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/alexander-rukin/serokell-doc-template/main/install.sh | bash
 ```
 
-That installs Typst too if you do not have it, using Homebrew when it is already
-there and otherwise downloading the official static binary into `~/.local/bin`.
-It never installs Homebrew itself and never asks for sudo. Pass `SKIP_TYPST=1`
-to handle Typst yourself.
+Two things worth knowing about what that script does:
 
-The CLI has no flag for automatic updates, so the script writes `autoUpdate`
-into `~/.claude/settings.json` for you. It copies the file to
-`settings.json.bak` first (once - a later run will not overwrite that original),
-adds one key, and rewrites the file as standard two-space JSON, so your own
-formatting is reflowed even though your settings are kept. It is safe to run
-again. Without it nothing checks for a newer version and you stay on whatever
-you installed.
+- **Typst.** It installs with Homebrew when Homebrew is already there, and
+  otherwise downloads the official static binary into `~/.local/bin`. It never
+  installs Homebrew itself and never asks for sudo. Pass `SKIP_TYPST=1` to
+  handle Typst yourself.
+- **`~/.claude/settings.json`.** The CLI has no flag for automatic updates, so
+  the script writes `autoUpdate` into your settings file. It copies the file to
+  `settings.json.bak` first (once - a later run will not overwrite that
+  original), adds one key, and rewrites the file as standard two-space JSON, so
+  your own formatting is reflowed even though your settings are kept. It is
+  safe to run again. Without automatic updates nothing checks for a newer
+  version and you stay on whatever you installed.
 
-To update by hand instead:
+### Using it
+
+Ask from any folder on your machine; the file does not have to live in this
+repository:
+
+> Make a PDF from proposal.md
+
+> Turn these notes into a candidate profile: notes.txt
+
+> Make a deck about our smart-contract audit process, for a client
+
+Three skills ship with the plugin: `serokell-pdf` (documents), `serokell-cv`
+(candidate profiles), and `serokell-slides` (decks). Each knows where the
+template is, asks instead of inventing when a title, name, or date is missing,
+and writes the PDF next to the source file. Typst still has to be installed.
+
+### Updating
+
+If you did not turn on automatic updates:
 
 ```bash
 claude plugin marketplace update serokell-docs
 ```
 
-If the version in `claude plugin list` does not move, reinstall: the marketplace
-manifest refreshes, but the cached plugin files do not always follow.
+If the version in `claude plugin list` does not move, reinstall: the
+marketplace manifest refreshes, but the cached plugin files do not always
+follow.
 
 ```bash
 claude plugin uninstall serokell-docs@serokell-docs && claude plugin install serokell-docs@serokell-docs
 ```
-
-After that you can ask for a PDF from any folder on your machine, and the
-document does not have to live in `content/`:
-
-> Make a PDF from proposal.md
-
-The skill knows where the template is, asks for a title block if the file has no
-frontmatter, and writes the PDF next to the source file. Typst still has to be
-installed.
-
-To build a file directly without Claude Code, the same entry point works:
-
-```bash
-./render.sh ~/notes/proposal.md            # -> ~/notes/proposal.pdf
-./render.sh ~/notes/proposal.md /tmp/x.pdf
-```
-
-Unlike `build.sh`, `render.sh` takes a document from anywhere and never writes
-inside the template directory.
-
-If you have [`just`](https://github.com/casey/just) installed you can use it
-instead - it is a thin wrapper over the same script:
-
-```bash
-just build example-proposal
-just watch example-proposal   # live rebuild while you edit
-just all                      # build everything in content/
-just list                     # what can I build?
-```
-
-Fonts are bundled in `assets/fonts/` and passed to Typst explicitly, so the
-build does not depend on what is installed on your machine.
-
----
-
-## Slide decks
-
-The same repository also builds branded 16:9 slide decks. A deck is one markdown
-file: a layout tag plus text per slide.
-
-The intended way to make one is to ask Claude Code, with the plugin installed:
-
-> Make a deck about our smart-contract audit process, about 15 minutes, for a
-> client. Here are my notes: ...
-
-Claude splits the material into slides, picks a layout for each one (there are
-37 of them - lists, cards, numbers, timelines, diagrams, device mockups), writes
-the `deck.md` next to your notes, renders the PDF and shows it to you. After
-that you edit in words - "slide 3 as two columns", "drop slide 6" - and it
-rebuilds in seconds. You never pick layouts by hand and never open Typst.
-
-To build a deck file directly:
-
-```bash
-./render-deck.sh ~/talks/kickoff.md              # -> ~/talks/kickoff.pdf
-THEME=dark ./render-deck.sh ~/talks/kickoff.md   # dark palette
-```
-
-Like `render.sh`, it takes a file from anywhere and never writes inside the
-template directory. The builder warns when a slide has more text than its layout
-holds (overflowing text is clipped, not reflowed) and when the page count stops
-matching the slide count.
-
-- `docs/FORMAT.md` - the deck.md reference: every layout, its fields, its items.
-- `decks/all-layouts.md` - one slide per layout; build it to see the vocabulary.
-- `src/slides.typ` - the layout library and the locked brand shell.
 
 ---
 
@@ -139,8 +105,22 @@ matching the slide count.
 Drop a `.md` file into `content/` and build it by name:
 
 ```bash
-./build.sh my-proposal        # content/my-proposal.md -> out/my-proposal.pdf
+./build.sh my-proposal          # content/my-proposal.md -> out/my-proposal.pdf
+./build.sh my-proposal --watch  # rebuild on every save
 ```
+
+If you have [`just`](https://github.com/casey/just) installed, it wraps the
+same script:
+
+```bash
+just build example-proposal
+just watch example-proposal   # live rebuild while you edit
+just all                      # build everything in content/
+just list                     # what can I build?
+```
+
+A document that lives somewhere else on disk builds with `./render.sh` instead
+(see [Scripting the build](#scripting-the-build)).
 
 Start the file with a frontmatter block. This is the only non-Markdown part,
 and it is what fills in the cover page:
@@ -169,10 +149,10 @@ can say `cover: false`.
 
 ### Build hints
 
-Every build runs a few advisory checks on your Markdown and prints `hint:` lines
-for things that are easy to get wrong and hard to spot afterwards: adjacent
-`Label: value` lines (which Markdown merges into one paragraph) and repeated
-generic headings. They are suggestions only and never stop the build.
+Every build runs a few advisory checks on your Markdown and prints `hint:`
+lines for things that are easy to get wrong and hard to spot afterwards:
+adjacent `Label: value` lines (which Markdown merges into one paragraph) and
+repeated generic headings. They are suggestions only and never stop the build.
 
 ### What's supported
 
@@ -238,7 +218,12 @@ usually worth it:
 ```
 
 **Inside a cell** you can use `**bold**`, `*italic*`, `` `code` ``, and
-`[links](https://example.com)`. All of them are styled as they are in body text.
+`[links](https://example.com)`. All of them are styled as they are in body
+text.
+
+One limit worth knowing: a cell cannot contain a real bulleted list or a code
+block. You can force a line break inside a cell with `<br>`, but a `-` typed
+after it stays a literal dash rather than becoming a bullet.
 
 #### Table width
 
@@ -263,39 +248,110 @@ To change the default for every document instead, set `table-width` at the top
 of `src/template.typ`. Column alignment from the colons works the same in both
 modes.
 
-One limit worth knowing: a cell cannot contain a real bulleted list or a code
-block. You can force a line break inside a cell with `<br>`, but a `-` typed
-after it stays a literal dash rather than becoming a bullet.
+### Images
 
-Image paths are resolved **relative to your `.md` file**, so if your document is
-`content/my-proposal.md`, then `![](diagram.svg)` points at
+Image paths are resolved **relative to your `.md` file**, so if your document
+is `content/my-proposal.md`, then `![](diagram.svg)` points at
 `content/diagram.svg`. Both raster and SVG work; prefer SVG for anything
 vector-shaped, since it stays sharp in print.
 
-See `content/example-proposal.md` for a worked example of every feature above.
+See `content/example-proposal.md` for a worked example of every feature above,
+and `content/example-profile.md` for the candidate-profile shape.
+
+---
+
+## Slide decks
+
+The same repository also builds branded 16:9 slide decks. A deck is one
+markdown file: a layout tag plus text per slide.
+
+The intended way to make one is to ask Claude Code, with the plugin installed:
+
+> Make a deck about our smart-contract audit process, about 15 minutes, for a
+> client. Here are my notes: ...
+
+Claude splits the material into slides, picks a layout for each one (there are
+37 of them - lists, cards, numbers, timelines, diagrams, device mockups),
+writes the `deck.md` next to your notes, renders the PDF and shows it to you.
+After that you edit in words - "slide 3 as two columns", "drop slide 6" - and
+it rebuilds in seconds. You never pick layouts by hand and never open Typst.
+
+To build a deck file directly:
+
+```bash
+./render-deck.sh ~/talks/kickoff.md              # -> ~/talks/kickoff.pdf
+THEME=dark ./render-deck.sh ~/talks/kickoff.md   # dark palette
+```
+
+Like `render.sh`, it takes a file from anywhere and never writes inside the
+template directory. The builder warns when a slide has more text than its
+layout holds (overflowing text is clipped, not reflowed) and when the page
+count stops matching the slide count. From a checkout, `./build-deck.sh
+decks/my-deck.md` does the same build inside the repo; it exists for working on
+the template itself.
+
+- `docs/FORMAT.md` - the deck.md reference: every layout, its fields, its
+  items.
+- `decks/all-layouts.md` - a deck that renders every layout; build it to see
+  the vocabulary.
+- `src/slides.typ` - the layout library and the locked brand shell.
+
+---
+
+## Scripting the build
+
+`render.sh` and `render-deck.sh` are the entry points the plugin skills call,
+and they work the same from your own automation. Both take a file from
+anywhere on disk, write the PDF next to it (or to the path you give), and
+never write inside the template directory - which matters when the template is
+installed read-only as a plugin:
+
+```bash
+./render.sh ~/notes/proposal.md            # -> ~/notes/proposal.pdf
+./render.sh ~/notes/proposal.md /tmp/x.pdf
+```
+
+Underneath, `build.sh` is a thin, dependency-free wrapper around one
+`typst compile` call, so it is safe to shell out to from a service:
+
+```bash
+typst compile src/main.typ out/doc.pdf \
+  --root . \
+  --font-path assets/fonts \
+  --ignore-system-fonts \
+  --input doc=content/doc.md \
+  --input art=true
+```
+
+Every path is relative to the repo root and the template takes no ambient
+state, which is what the planned sandboxed Node/TS rendering service will need.
 
 ---
 
 ## Changing the branding
 
-All of it lives in `src/template.typ`, at the top of the file:
+Document branding lives in `src/template.typ`, at the top of the file:
 
 ```typst
-#let accent = rgb("#D92B04")     // Serokell red
-#let ink    = rgb("#1A1A1A")     // body text
-#let font-body    = ("Google Sans Flex 24pt", "Noto Color Emoji")
-#let font-heading = ("Google Sans Flex 36pt", "Noto Color Emoji")
-#let font-display = ("Google Sans Flex 120pt", "Noto Color Emoji")
-#let page-margin  = (top: 24mm, bottom: 44mm, x: 20mm)
+#let accent = rgb("#D92B04")
+#let ink = rgb("#1A1A1A") // body text
+#let font-emoji = "Noto Color Emoji"
+#let font-display = ("Google Sans Flex 120pt", font-emoji) // cover title only
+#let font-heading = ("Google Sans Flex 36pt", font-emoji) // h1-h3
+#let font-body = ("Google Sans Flex 24pt", font-emoji) // body copy
+#let page-margin = (top: 24mm, bottom: 40mm, x: 20mm)
 ```
 
-Google Sans Flex is shipped as one font family per optical size, so the family
-name picks the optical size and `weight` picks the cut. Because the repo bundles
-static instances rather than the variable font, weights select reliably and no
-`fonttools` step is needed.
+The slide decks keep their own tokens at the top of `src/slides.typ`.
 
-To add a weight or optical size, copy the matching file from the Google Fonts
-download into `assets/fonts/` and reference the family by name.
+Google Sans Flex is shipped as one font family per optical size, so the family
+name picks the optical size and `weight` picks the cut. Because the repo
+bundles static instances rather than the variable font, weights select
+reliably and no `fonttools` step is needed.
+
+Only the font cuts actually used are committed. To add a weight or optical
+size, copy the matching file from the Google Fonts download into
+`assets/fonts/` and reference the family by name.
 
 ---
 
@@ -317,11 +373,13 @@ src/slides.typ    the slide layout library
 src/slidegen.py   deck.md -> Typst
 src/md-advice.sh  advisory hints on the author's Markdown
 
+skills/           the Claude Code skills: serokell-pdf, serokell-cv, serokell-slides
+.claude-plugin/   plugin and marketplace manifests
 content/          your .md documents (and their images)
 decks/            your decks
 docs/FORMAT.md    the deck.md field reference
 assets/fonts/     bundled fonts + OFL licences
-assets/           brand artwork and marks
+assets/           brand artwork and marks (provenance in assets/CREDITS.md)
 dev/              test suite and type specimens
 out/              generated PDFs (gitignored)
 ```
@@ -332,14 +390,14 @@ the same file compiles from a checkout and from the temporary directory that
 
 ---
 
-## Notes and TODOs
+## Printing and artwork
 
 - **The footer artwork bleeds to the page edges**, matching the cover. One
   consequence: the Serokell mark baked into the right-hand peak lands about 5mm
   from the trim edge at footer scale, so a printer with a large unprintable
-  margin may clip it. It is decorative there - the legible logo is on the cover -
-  but if that matters, reduce the right-hand `dx` in `footer-art`, at the cost of
-  a visible hard edge where the peak is cropped in the source PNG.
+  margin may clip it. It is decorative there - the legible logo is on the
+  cover - but if that matters, reduce the right-hand `dx` in `footer-art`, at
+  the cost of a visible hard edge where the peak is cropped in the source PNG.
 - **The footer artwork is raster.** `footer-mountains-left.png` and
   `footer-mountains-right.png` are roughly 250 dpi at A4 width. Good enough for
   screen and office printing; **TODO: replace with SVG before sending anything
@@ -348,54 +406,36 @@ the same file compiles from a checkout and from the temporary directory that
 - **Missing artwork does not break the build.** If the two PNGs are absent,
   `build.sh` detects it, warns, and the template falls back to a plain rule and
   a placeholder note instead of failing.
-- The Serokell logo is baked into `footer-mountains-right.png`; there is no
-  separate logo asset to maintain.
-- Typst and the `cmarker` package version are pinned (`@preview/cmarker:0.1.8`)
-  so builds are reproducible.
-- Only the font cuts actually used are committed. To add a weight or optical
-  size, download the family from Google Fonts and copy the file you need into
-  `assets/fonts/`.
+- **Where the logo lives.** In documents the Serokell mark is baked into
+  `footer-mountains-right.png`; there is no separate logo asset on the document
+  side. The slide decks use the standalone marks
+  `assets/serokell-mark-light.svg` and `assets/serokell-mark-dark.svg`.
 
 ---
 
 ## Licence
 
-The code in this repository (`src/template.typ`, `src/main.typ`, `build.sh`, the
-`justfile`, and the example content) is licensed under the **Apache License
-2.0**. See [LICENSE](LICENSE) for the full text.
+The code in this repository - the Typst layout library and templates, the
+generators, the shell scripts, and the skills - is licensed under the **Apache
+License 2.0**. See [LICENSE](LICENSE) for the full text and [NOTICE](NOTICE)
+for what is and is not covered.
 
 Apache 2.0 was chosen over MIT specifically because section 6 states that the
-licence grants no trademark rights. This repository ships the Serokell wordmark
-inside one of the images, and that carve-out should be explicit in the licence
+licence grants no trademark rights. This repository ships the Serokell
+wordmark in its artwork, and that carve-out should be explicit in the licence
 rather than only in a README note.
 
 ### The bundled assets are licensed separately
 
-- **Fonts.** Google Sans Flex and JetBrains Mono are both under the SIL Open
-  Font License 1.1. The full licence text for each ships alongside the font
-  files in `assets/fonts/`, which is what the OFL requires when redistributing
-  them.
-- **Artwork and logo.** `assets/footer-mountains-*.png` are Serokell brand
-  assets, and the right-hand image has the Serokell wordmark baked into it.
-  They are here so the template builds out of the box; they are not covered by
-  whatever licence applies to the code in this repository. If you are adapting
-  this template for another organisation, replace both images.
-
----
-
-### Scripting the build
-
-`build.sh` is a thin, dependency-free wrapper around one `typst compile` call,
-so it is safe to shell out to from a service:
-
-```bash
-typst compile src/main.typ out/doc.pdf \
-  --root . \
-  --font-path assets/fonts \
-  --ignore-system-fonts \
-  --input doc=content/doc.md \
-  --input art=true
-```
-
-Every path is relative to the repo root and the template takes no ambient state,
-which is what the planned sandboxed Node/TS rendering service will need.
+- **Fonts.** Google Sans Flex, Golos Text, JetBrains Mono, and Noto Color
+  Emoji are all under the SIL Open Font License 1.1. The full licence text for
+  each ships alongside the font files in `assets/fonts/`, which is what the
+  OFL requires when redistributing them.
+- **Artwork and logo.** The footer artwork (`assets/footer-mountains-*.png`),
+  the slide artwork (`assets/brand-*.png`), and the Serokell marks
+  (`assets/serokell-mark-*`) are Serokell brand assets; the wordmark is baked
+  into the right-hand footer image and ships standalone as the marks. They are
+  here so the template builds out of the box; they are not covered by the
+  licence that applies to the code. If you are adapting this template for
+  another organisation, replace them. Provenance for every asset is recorded
+  in `assets/CREDITS.md`.
