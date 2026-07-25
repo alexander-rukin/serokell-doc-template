@@ -56,10 +56,39 @@ for f in decks/*.md; do
 done
 
 head_ "Dark theme"
-if THEME=dark ./render-deck.sh decks/all-layouts.md "$WORK/dark.pdf" >/dev/null 2>"$WORK/dark.err"; then
-  ok "all-layouts renders dark"
+# Compiling is not the claim - the claim is that the page comes out dark. A
+# check that only asserts "typst exited 0" passes even with the theme wired to
+# a constant, which is what this one used to do.
+if THEME=dark ./render-deck.sh decks/all-layouts.md "$WORK/dark.pdf" >/dev/null 2>"$WORK/dark.err" \
+   && THEME=light ./render-deck.sh decks/all-layouts.md "$WORK/light.pdf" >/dev/null 2>&1; then
+  lum() {
+    rm -f "$WORK"/lum-*.png
+    # pdftoppm zero-pads the page number to the document's width, so glob it
+    pdftoppm -png -r 20 -f 2 -l 2 "$1" "$WORK/lum" 2>/dev/null
+    python3 - "$WORK" <<'LUM'
+import glob, sys
+from PIL import Image
+f = sorted(glob.glob(sys.argv[1] + "/lum-*.png"))[0]
+im = Image.open(f).convert("L")
+print(round(sum(im.getdata()) / (im.width * im.height)))
+LUM
+  }
+  d=$(lum "$WORK/dark.pdf"); l=$(lum "$WORK/light.pdf")
+  if [ "$d" -lt 90 ] && [ "$l" -gt 180 ]; then
+    ok "the dark deck is actually dark (page luminance $d vs $l light)"
+  else
+    bad "dark theme" "page luminance dark=$d light=$l - the theme is not reaching the page"
+  fi
 else
   bad "all-layouts dark" "$(tail -2 "$WORK/dark.err")"
+fi
+
+head_ "Theme values"
+if out=$(THEME=bogus ./render-deck.sh decks/plugin-deck.md "$WORK/x.pdf" 2>&1); rc=$?; [ $rc -ne 0 ] \
+   && echo "$out" | grep -q "theme must be light or dark"; then
+  ok "an unknown theme is refused, not silently rendered light"
+else
+  bad "theme validation" "rc=$rc out=$(echo "$out" | tail -1)"
 fi
 
 # ------------------------------------------------- the catalog stays in sync
@@ -184,6 +213,40 @@ if [ $rc -ne 0 ] && echo "$out" | grep -q "must start with a layout tag"; then
   ok "a deck with no tag says so, instead of guessing a layout"
 else
   bad "no tag" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+printf '@image-row\n# Screens\n- nope.png | One | first\n- gone.png | Two | second\n' > "$WORK/norow.md"
+out=$(./render-deck.sh "$WORK/norow.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "image not found next to the deck"; then
+  ok "a layout that passes its images positionally is checked too"
+else
+  bad "image-row missing image" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+printf '@code\n# Showing an img: line\n```typ\n#split([T], [B], img: "diagram.png")\n```\n' > "$WORK/fenceimg.md"
+if ./render-deck.sh "$WORK/fenceimg.md" "$WORK/fenceimg.pdf" >/dev/null 2>&1; then
+  ok "an image path inside a code fence is sample text, not a file to find"
+else
+  bad "fenced img:" "a slide documenting the format failed to build"
+fi
+
+printf '# Doc\n\n![x](nope.png)\n\nText.\n' > "$WORK/docimg.md"
+out=$(./render.sh "$WORK/docimg.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "image not found next to the document"; then
+  ok "a document with a missing image stops with the filename"
+else
+  bad "document missing image" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+printf '@statement\n# Links\nsub: Docs at https://serokell.io/blog now\n' > "$WORK/url.md"
+if ./render-deck.sh "$WORK/url.md" "$WORK/url.pdf" >/dev/null 2>&1 \
+   && python3 -c "
+import re, sys
+d = open('$WORK/url.pdf','rb').read()
+sys.exit(0 if b'serokell.io/blog' in b' '.join(re.findall(rb'/URI\s*\((.*?)\)', d)) else 1)"; then
+  ok "a URL on a slide is still a link in the PDF"
+else
+  bad "url link" "the link annotation was lost (over-eager escaping?)"
 fi
 
 printf '@split image=nope.png\n# T\nBody\n' > "$WORK/noimg.md"

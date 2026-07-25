@@ -62,14 +62,26 @@ while IFS= read -r ref; do
     # obvious; `../` is not, and without this a document handed to you by
     # someone else could write through `cp` to any path you can write - the
     # sandbox is what keeps a build from touching the rest of the disk.
-    /*)   echo "warning: image path must stay inside the document's folder, skipping: $ref" >&2; continue ;;
-    ..*|*/..*) echo "warning: image path must stay inside the document's folder, skipping: $ref" >&2; continue ;;
+    /*)   die "image path must stay inside the document's folder: $ref" ;;
+    ..*|*/..*) die "image path must stay inside the document's folder: $ref" ;;
+  esac
+  # A symlink (or a symlinked folder) next to the document can still point anywhere;
+  # resolve before copying so what lands in the PDF is a file from the document's own
+  # folder and not, say, something out of a home directory.
+  real="$(cd "$SRC_DIR" 2>/dev/null && readlink -f "$ref" 2>/dev/null || true)"
+  case "$real" in
+    "$SRC_DIR"/*) ;;
+    "") ;;                       # does not resolve - handled as missing below
+    *) die "image resolves outside the document's folder: $ref -> $real" ;;
   esac
   if [ -f "$SRC_DIR/$ref" ]; then
     mkdir -p "$WORK/content/$(dirname "$ref")"
     cp "$SRC_DIR/$ref" "$WORK/content/$ref"
   else
-    echo "warning: image not found, skipping: $ref" >&2
+    # Stopping here beats "skipping" followed by a Typst failure naming a temp
+    # directory this script has already deleted.
+    die "image not found next to the document: $ref
+  put the file at $SRC_DIR/$ref, or take the ![...](...) out of the markdown"
   fi
 done < <(grep -oE '!\[[^]]*\]\([^)]+\)' "$SRC" 2>/dev/null \
            | sed -E 's/.*\(([^)]+)\).*/\1/' | sed -E 's/[[:space:]]+".*"$//' || true)

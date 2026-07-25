@@ -68,9 +68,10 @@ def esc(s):
         s = s.replace(ch, "\\" + ch)
     # `//` starts a Typst line comment, which would swallow the rest of the
     # generated line including its closing bracket - the author would get
-    # "unclosed delimiter" pointing at a temp file. Costs nothing to escape, and
-    # "and/or", "Q3 // Q4" and paths are ordinary things to write on a slide.
-    s = s.replace("//", "\\/\\/")
+    # "unclosed delimiter" pointing at a temp file. `://` is exempt: Typst does
+    # not treat it as a comment, and escaping it strips the link annotation, so
+    # every URL on the slide would stop being clickable in the PDF.
+    s = re.sub(r"(?<!:)//", r"\\/\\/", s)
     return s
 
 
@@ -81,11 +82,15 @@ def content(s):
     return "[" + body + "]"
 
 
+IMAGES = []          # every image path emitted, in order; see --images
+
+
 def path_lit(p):
-    """A file path as a Typst string literal."""
+    """A file path as a Typst string literal, recorded for the build to check."""
     p = (p or "").strip().strip('"')
     if '"' in p or "\\" in p:
         die('image path must not contain quotes or backslashes: %s' % p)
+    IMAGES.append(p)
     return '"' + p + '"'
 
 
@@ -650,9 +655,16 @@ def emit(layout, opts, f):
 
 
 def main():
-    if len(sys.argv) < 2:
-        sys.exit("usage: slidegen.py deck.md > _deck.typ")
-    text = open(sys.argv[1], encoding="utf-8").read()
+    args = sys.argv[1:]
+    # --images: run the whole generator, then print the image paths it emitted,
+    # one per line, instead of the Typst. Grepping the generated file cannot do
+    # this correctly - it cannot tell an argument from a fenced code sample, and
+    # it misses layouts that pass paths positionally.
+    list_images = "--images" in args
+    args = [a for a in args if a != "--images"]
+    if not args:
+        sys.exit("usage: slidegen.py [--images] deck.md > _deck.typ")
+    text = open(args[0], encoding="utf-8").read()
     fm, slides = split_slides(text)
     if not slides:
         die("no slides found - every slide starts with a line like '@cover'")
@@ -670,6 +682,13 @@ def main():
         except SystemExit as e:
             raise SystemExit("slide %d (@%s): %s" % (n, layout, str(e).replace("deck.md: ", "")))
         out.append("")
+    if list_images:
+        seen = []
+        for img in IMAGES:
+            if img and img not in seen:
+                seen.append(img)
+        sys.stdout.write("".join(i + "\n" for i in seen))
+        return
     sys.stdout.write("\n".join(out))
 
 

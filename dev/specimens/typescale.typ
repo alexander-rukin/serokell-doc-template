@@ -2,7 +2,7 @@
 // each shown at its real size with a spec label saying exactly where it is used.
 // One role per job, one job per role - no more "subhead" drifting 15/12/9.6pt.
 
-#import "slides.typ": *
+#import "../../slides.typ": *
 
 #slide-raw(tag: "type-scale", {
   at(16.9, 16.9, 209.6, hd(fs-head, [Шкала текста - шесть ролей]))

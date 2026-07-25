@@ -49,11 +49,25 @@ found several things worth naming:
   run, and reported failure after a successful install when the settings file
   was not valid JSON. Its `claude` calls now read from `/dev/null`, so a prompt
   cannot eat the rest of the script under `curl | bash`.
-- One test could not fail: it snapshotted the tree after the builds it was meant
-  to police, and everything a build writes is gitignored. It now compares file
-  mtimes against a stamp taken before anything runs. The suite grew from 16
-  checks to 22, covering `build-deck.sh`, path traversal, and the parser
-  failures above.
+- Two tests could not fail: the tree check snapshotted the tree after the builds
+  it was meant to police (and everything a build writes is gitignored), and the
+  dark-theme check only asserted that Typst exited cleanly, so it passed with
+  the theme wired to a constant. Both are now discriminating - file mtimes
+  against a stamp taken before anything runs, and the mean luminance of a
+  rendered page. The suite grew from 16 checks to 27.
+
+A second review pass over those fixes found more, all included here: the
+missing-image check missed `@image-row`, which passes its paths positionally,
+and false-positived on a `@code` slide quoting an `img:` line - so the build now
+asks the generator which images it emitted (`slidegen.py --images`) instead of
+grepping the file it produced. Escaping `//` was too broad and stripped the link
+annotation from every URL, which is a worse bug than the one it fixed. `render.sh`
+- the path documents and profiles take - kept the old "skipping" warning followed
+by a Typst failure. The installer's marketplace probe never matched real CLI
+output, so `marketplace update` had quietly stopped running, and a settings file
+holding valid JSON that is not an object still ended in a traceback. An image
+that resolves through a symlink outside the source folder is refused as well:
+no write escaped, but a build should not read from elsewhere either.
 
 Exploration files (nine background-artwork iterations, cover variants, a broken
 sample) left the repository root; the two type specimens moved to

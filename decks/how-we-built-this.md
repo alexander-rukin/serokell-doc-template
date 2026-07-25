@@ -84,7 +84,7 @@ lead: The seams are what keep the brand in one place
 # Where it stands
 - 37 | slide layouts
 - 3 | skills in one plugin
-- 22 | tests on every change
+- 27 | tests on every change
 
 @section
 # How to use it
@@ -159,7 +159,7 @@ sub: This deck is the first real use of the flow, and building it surfaced two b
 # Then an outside review found more
 - A hole | An image path with ../ escaped the build sandbox: a deck someone sends you could overwrite your files
 - A lie | "A missing image falls back to a placeholder" was in the docs, not in the code - the build just died
-- A decorative test | One check could not fail whatever we broke, which is worse than not having it
+- Decorative tests | Two checks could not fail whatever we broke, which is worse than not having them
 
 @roadmap
 # How it grew

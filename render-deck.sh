@@ -63,6 +63,15 @@ while IFS= read -r ref; do
     /*)   die "image path must stay inside the deck's folder: $ref" ;;
     ..*|*/..*) die "image path must stay inside the deck's folder: $ref" ;;
   esac
+  # A symlink (or a symlinked folder) next to the deck can still point anywhere;
+  # resolve before copying so what lands in the PDF is a file from the deck's own
+  # folder and not, say, something out of a home directory.
+  real="$(cd "$SRC_DIR" 2>/dev/null && readlink -f "$ref" 2>/dev/null || true)"
+  case "$real" in
+    "$SRC_DIR"/*) ;;
+    "") ;;                       # does not resolve - handled as missing below
+    *) die "image resolves outside the deck's folder: $ref -> $real" ;;
+  esac
   if [ -f "$SRC_DIR/$ref" ]; then
     mkdir -p "$WORK/$(dirname "$ref")"
     cp "$SRC_DIR/$ref" "$WORK/$ref"
@@ -72,14 +81,15 @@ done < <(grep -ohE '[A-Za-z0-9_./-]+\.(png|jpg|jpeg|svg|webp|gif)' "$SRC" 2>/dev
 # deck.md -> Typst (warnings about over-long text go to stderr and are real)
 python3 "$TEMPLATE_DIR/slidegen.py" "$SRC" > "$WORK/deck.typ"
 
-# Check every image the generated deck actually asks for, rather than every path
-# that looked like a filename in the source. Typst's own failure names a file
-# inside a temp directory this script has already deleted, which tells the author
-# nothing; this names the file as they wrote it.
+# Check the images the generator actually emitted. Asking slidegen (--images)
+# rather than grepping the generated file is the point: only the generator knows
+# which paths are arguments and which are sample text inside a code fence, and
+# some layouts pass their paths positionally with no `img:` key to grep for.
 while IFS= read -r want; do
+  [ -n "$want" ] || continue
   [ -f "$WORK/$want" ] || die "image not found next to the deck: $want
   put the file at $SRC_DIR/$want, or leave the image off that slide for a placeholder"
-done < <(grep -ohE '(img|image): "[^"]+"' "$WORK/deck.typ" | sed -E 's/^[a-z]+: "//; s/"$//' | sort -u)
+done < <(python3 "$TEMPLATE_DIR/slidegen.py" --images "$SRC" 2>/dev/null)
 
 # theme (light|dark) from the deck.md frontmatter, or override with THEME=dark
 theme="${THEME:-$(sed -n '/^---/,/^---/p' "$SRC" | grep -oiE '^theme:[[:space:]]*[a-z]+' | head -1 | grep -oiE '[a-z]+$' || true)}"
