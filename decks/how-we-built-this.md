@@ -84,7 +84,7 @@ lead: The seams are what keep the brand in one place
 # Where it stands
 - 37 | slide layouts
 - 3 | skills in one plugin
-- 16 | tests on every change
+- 22 | tests on every change
 
 @section
 # How to use it
@@ -131,7 +131,7 @@ lead: You never open Typst, and rarely the markdown
 @columns
 # Two things worth knowing
 lead: They come up on almost every deck
-- Images | Point at a file next to your deck; if it is not ready you get a grey panel the right size and the deck still builds
+- Images | Point at a file next to your deck; leave the image off a slide and you get a grey panel the right size instead
 - Warnings | "This layout holds about 420 characters" means text would be cut off - shorten it or split the slide
 
 @table
@@ -154,6 +154,12 @@ head: File | What it is
 @statement
 # Dogfooding found what tests did not
 sub: This deck is the first real use of the flow, and building it surfaced two bugs nobody had thought to test for
+
+@cards
+# Then an outside review found more
+- A hole | An image path with ../ escaped the build sandbox: a deck someone sends you could overwrite your files
+- A lie | "A missing image falls back to a placeholder" was in the docs, not in the code - the build just died
+- A decorative test | One check could not fail whatever we broke, which is worse than not having it
 
 @roadmap
 # How it grew

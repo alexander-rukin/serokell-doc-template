@@ -19,9 +19,9 @@
 #let bg       = if dark { rgb("#141518") } else { white }
 #let ink      = if dark { rgb("#F3F4F6") } else { rgb("#000000") }
 #let ink-soft = if dark { rgb("#9AA0A6") } else { rgb("#404040") }
-// soft, clean card: a very light fill with a hairline border, not a muddy mid-grey
-// (Sasha 24.07 "серый грязный, хочу мягкий приятный"). The border keeps the near-
-// white light card legible against the white page.
+// soft, clean card: a very light fill with a hairline border, not a muddy
+// mid-grey, which read as dirty. The border keeps the near-white light card
+// legible against the white page.
 #let card-bg     = if dark { rgb("#212327") } else { rgb("#F1F1F3") }
 #let card-stroke = if dark { 0.75pt + rgb("#33353B") } else { 0.75pt + rgb("#E2E2E6") }
 #let card-ink = if dark { rgb("#F3F4F6") } else { rgb("#000000") }
@@ -44,8 +44,8 @@
 #let CW = W - 2 * M
 
 // Modular scale: ONE ratio (1.25, major third) off a 12pt body. Every role is
-// base * 1.25^n, so steps relate cleanly instead of drifting per-role (Sasha
-// 24.07: sizes felt random because the old ratio wandered 1.20..1.60).
+// base * 1.25^n, so steps relate cleanly instead of drifting per-role (sizes
+// felt random because the old ratio wandered between 1.20 and 1.60).
 #let fs-title = 36.6pt   // display hero   (step +5)  cover/section/statement/stat/closing
 #let fs-lead2 = 23.4pt   // metric number  (step +3)  step numbers, highlight
 #let fs-head  = 18.8pt   // working heading (step +2) content-slide heading, card statement
@@ -61,7 +61,7 @@
 // more air than small type, and the same role-pair gets the same gap on every
 // slide. No per-layout magic millimetres.
 // The gap under a heading GROWS with the heading's size, so the three levels are
-// visibly different air, not the same 4.5mm under every title (Sasha 24.07: slides
+// visibly different air, not the same 4.5mm under every title (slides
 // 5 and 6 had identical gaps under differently-sized headings).
 #let gap-hero-sub   = 0.65 * fs-title  // ~8.4mm  H1 display hero -> sub / attribution
                                        //         (cover, statement, stat, quote, closing)
@@ -71,25 +71,25 @@
                                        //         (card label; the frame lets it breathe)
 #let gap-label-tight = 0.45 * fs-item  // ~2.4mm  H3 label -> its body on the OPEN page
                                        //         (two-col: label + body must read as ONE
-                                       //         block, not two spaced elements - Sasha 24.07)
+                                       //         block, not two spaced elements)
 #let gap-fig-label  = 0.75 * fs-lead2   // ~6.2mm  BIG figure -> its label/description;
                                        //         tied to the figure's own kegel, so a big
                                        //         number gets more air than a text label.
                                        //         Same on EVERY metric slide (kpis, metric-cols,
-                                       //         metric-grid) - Sasha 24.07 v24 slide 21 "close".
+                                       //         metric-grid).
 #let gap-num-body   = 0.60 * fs-lead2  // ~5mm    step number -> step text
 #let gap-meta       = 0.90 * fs-item   // ~4.8mm  sub -> small muted meta line: meta
                                        //         is a SEPARATE service line, not a tail
-                                       //         of the subtitle - needs real air (Sasha 24.07)
+                                       //         of the subtitle - needs real air
 #let gap-item       = 9mm  // list rhythm (bullets)
 #let Y2      = 45          // content band top (mm) for heading-top layouts
 #let colw    = 95          // text column measure (mm): bullets, two-col, split, matrix
 #let bigw    = 205         // display-statement measure (mm): cover, section, stat, quote
 #let gut-card = 6.4        // gutter between cards in a row (mm) - ONE value for every
                           // card row (compare, cards, steps), independent of count:
-                          // 4-up must not gap wider than 3-up (Sasha 24.07).
+                          // 4-up must not gap wider than 3-up.
 // Leading per role: display tightens with size, but a multi-line H1 still needs air
-// between its lines - 0.28em felt cramped in two lines (Sasha 24.07).
+// between its lines - 0.28em felt cramped in two lines.
 #let lead-disp = 0.36em    // multi-line display titles
 #let lead-head = 0.5em     // fs-head bold blocks (quote, card statement)
 #let fs-code   = 11pt      // mono code on the code slide (denser than body)
@@ -120,14 +120,14 @@
 // vertically-centred block on the left band (x=16.9). Single-content layouts
 // (statement, stat, quote, section, closing) and the text half of side-by-side
 // layouts all sit on the frame's vertical midline, so nothing floats at an
-// unrelated height (Sasha, 24.07). x-offset can be overridden for the right col.
+// unrelated height. x-offset can be overridden for the right col.
 #let vblock(w, body, x: 16.9) = place(horizon + left, dx: x * 1mm - M,
   box(width: w * 1mm, body))
 
 // text helpers (weight/font per role, all template-black)
 // top-edge/bottom-edge trim the display faces' tall optical line-box to the real
 // glyph extent (cap-height..baseline), so a heading doesn't leave a big air gap
-// below it before the next element (Sasha, 24.07 "почему такой огромный отступ").
+// below it before the next element.
 #let disp(s, body) = text(font: font-display, size: s, weight: "bold", fill: ink,
   top-edge: "cap-height", bottom-edge: "baseline", body)
 #let hd(s, body)   = text(font: font-heading, size: s, weight: "bold", fill: ink,
@@ -136,7 +136,7 @@
 
 // ---- the fixed hierarchy (see typescale specimen) - one role per job ---------
 // Three roles share the 15pt step but separate by WEIGHT so no two thin levels
-// ever sit together (Sasha 24.07 "подзаголовок и текст оба тонкие"):
+// ever sit together:
 //  lbl  - H3 Лейбл  15 Bold   : card / column label, pairs with Body below it.
 //  subh - Подзаголовок 15 Medium : the ONE explanatory line under H1/H2. Medium,
 //         not Regular, so it holds against Body's Regular.
@@ -149,7 +149,7 @@
 //  note - Body 12 Regular muted : an explanatory SENTENCE attached to content
 //         (a code caption, a roadmap stage). Caption size is for things that are
 //         not sentences - meta, attribution, a role, an axis label. A sentence
-//         that carries meaning is body size, just quieter (Sasha 25.07: "текст
+//         that carries meaning is body size, just quieter ("текст
 //         внизу слишком мелкий").
 #let note(body) = text(font: font-body, size: fs-desc, fill: ink-soft, body)
 
@@ -157,20 +157,20 @@
 // Deliberately sparse - one accent per slide, never more. Overuse kills it.
 //  ac[word]  : paint ONE key word the brand red AND bold it. In a heading the text
 //              is already bold so it just reddens; in running text the accent word
-//              also gains weight so it holds up against the red (Sasha, 24.07).
+//              also gains weight so it holds up against the red.
 //  noted[..] : a chunky red vertical rule down the left edge of a small note or
 //              caption, echoing the cover's accent bar. ONLY for footnotes / small
-//              remarks - NOT for headings or pull quotes (looked odd, Sasha 24.07).
+//              remarks - NOT for headings or pull quotes (looked odd).
 #let ac(body) = text(weight: "bold", fill: accent, body)
 // thin red rule that stands TALLER than the note text and runs down its left,
-// vertically centred on the text (Sasha 24.07: longer, not thicker).
+// vertically centred on the text (longer, not thicker).
 #let noted(body) = grid(columns: (2.4pt, auto), column-gutter: 5mm, align: horizon,
   box(width: 2.4pt, height: 7mm, fill: accent), body)
 
 // a soft rounded card: label (H3) and body (Body) as ONE group at the top, with
 // the label->body gap between them. Previously the label was pinned to the top and
 // a big bold statement to the bottom, leaving a dead hole in the middle and reading
-// as heavy all-caps (Sasha 24.07 "просто ад"). Now: light card, hairline border,
+// as heavy all-caps. Now: light card, hairline border,
 // label bold, body regular - grouped, breathing, no floor-pin.
 #let gcard(x, y, w, h, label, statement) = at(x, y, w, box(
   width: 100%, height: h * 1mm, radius: card-r, fill: card-bg, stroke: card-stroke,
@@ -206,7 +206,7 @@
 
 // Cover - template title placement (left, y=59) PLUS our brand shell: the
 // mountain range band + a mirrored peak on the right + white Serokell mark +
-// the red accent tick. Mountains are part of our style (kept, per Sasha).
+// the red accent tick. Mountains are part of the brand and stay.
 #let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(tag: tag, foot: false, {
   // single full-width mountain footer (one cohesive band, fades into the white
   // page at the top; tall peak on the right). Replaces the band + mirrored peak.
@@ -216,14 +216,14 @@
   // reads on the peak) - consistent logo position across the whole deck.
   place(bottom + right, dy: FOOT_DROP, box(image("assets/serokell-mark-light.svg", height: 5mm)))
   // accent tick pinned to the TOP-LEFT of the content grid, not floating by the
-  // title - reads as a brand marker on the frame, not a heading underline (Sasha 24.07)
+  // title - reads as a brand marker on the frame, not a heading underline
   place(top + left, accent-bar)
   // title block on the lower-left band: TWO text roles only (title + subtitle).
   // The meta line moves down to the footer slot (below), so the block doesn't
-  // stack three type sizes (Sasha 24.07 "перебор").
+  // stack three type sizes.
   // meta lives INSIDE the text block, a plain small line under the subtitle -
   // NOT in the bottom furniture zone, where it crossed the mountain art on dark
-  // and hung detached on light (Sasha 24.07 "внизу плохо, лучше под подзаголовком").
+  // and hung detached on light.
   at(16.9, 55, bigw, {
     disp(fs-title, par(leading: lead-disp, title))
     if subtitle != none { v(gap-hero-sub); subh(subtitle) }
@@ -240,7 +240,7 @@
 // Section divider (template slide 2): the section title alone as the hero on the
 // left band. Optional kicker (eyebrow) above it. No section number, and NO accent
 // bar - the red bar is reserved for the COVER only, so it reads as "the deck
-// starts here", not a repeating mark (Sasha 24.07: "полоску только на обложке").
+// starts here", not a repeating mark ("полоску только на обложке").
 #let section(title, kicker: none, tag: none) = slide-raw(tag: tag, {
   vblock(bigw, {
     if kicker != none { kick(kicker); v(gap-label-tight) }
@@ -262,26 +262,25 @@
 #let bullets(title, items, lead: none, tag: none) = slide-raw(tag: tag, {
   // Heading (left band) and the item stack (right column) share ONE vertical
   // centre, so the two read as a paired "heading | list", not two blocks floating
-  // at unrelated heights (Sasha, 24.07 "что за 4 строки непонятно отцентрованные").
+  // at unrelated heights.
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
     // lead is the subhead under H2 (15 Medium), so it is NOT smaller than the
-    // items on the right (Sasha 24.07: подзаголовок was 12, items were 15).
+    // items on the right (подзаголовок was 12, items were 15).
     if lead != none { v(gap-head-body); subh(lead) }
   }))
   // Each item is EITHER a bare line (str) OR a (heading, text) mini-block that
-  // reads like the card slides - a bold label + a supporting line (Sasha 24.07
-  // v25 slide 6: "просится не строчки, а мини блоки заголовок+текст"). Blocks get
+  // reads like the card slides - a bold label + a supporting line. Blocks get
   // a bigger inter-item gap (they are two lines each); bare lines keep gap-item.
   place(horizon + left, dx: 128.1mm - M, box(width: colw * 1mm, {
     for (i, it) in items.enumerate() {
       let block = type(it) == array
       // between blocks: clearly bigger than the heading->text gap inside a block,
-      // so each mini-card reads as one unit (Sasha 24.07 v26: "увеличь между абзацами").
+      // so each mini-card reads as one unit ("увеличь между абзацами").
       if i > 0 { v(if block { 11mm } else { gap-item }) }
       if block {
         // EXACTLY the card's heading->text piece: lbl + gap-label-body + bd. Same
-        // token as cards/two-col so the distance matches everywhere (Sasha 24.07 v26).
+        // token as cards/two-col so the distance matches everywhere.
         lbl(it.at(0), fill: ink)
         v(gap-label-body)
         bd(fs-desc, it.at(1))
@@ -294,14 +293,14 @@
 
 // Two columns (template slide 8/9): heading top-left, two text columns below.
 // Each column is a (heading, body) pair: bold heading on its own line, body below.
-// NOT heading+body as one paragraph (Sasha 24.07 slide 5).
+// NOT heading+body as one paragraph.
 #let two-col(title, left, right, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, hd(fs-head, title))
   // ONE label->body gap for every open-page label+body pair in the deck
   // (columns, two-col, feature-grid, image-row, metric rows): gap-label-body,
-  // the same gap the cards use, which Sasha approved. The old split (tight 2.4mm
+  // the same gap the cards use. The old split (tight 2.4mm
   // in columns vs a doubled ~6.7mm here from an extra par-spacing) read as
-  // inconsistent "по какому признаку" (Sasha 24.07 v22). No stray par-spacing.
+  // inconsistent "по какому признаку". No stray par-spacing.
   let col(x, pair) = at(x, Y2, colw, {
     lbl(pair.at(0), fill: ink)
     v(gap-label-body)
@@ -355,13 +354,12 @@
 // Quote (template quote): left-aligned pull quote + attribution, in the left band.
 #let quote-slide(body, who: none, tag: none) = slide-raw(tag: tag, {
   vblock(bigw, {
-    // closing period sits OUTSIDE the guillemets, the Russian norm (Sasha 24.07);
+    // closing period sits OUTSIDE the guillemets, the Russian norm;
     // pass `body` WITHOUT a trailing period.
     hd(fs-head, par(leading: lead-head)[«#body».])
-    // attribution is NOT tiny caption under an H2 - that is banned (Sasha 24.07
-    // "нельзя маленький текст под h2"). It is a muted Подзаголовок (15 Medium).
+    // attribution is NOT tiny caption under an H2 - that is banned. It is a muted Подзаголовок (15 Medium).
     // gap is tied to fs-head (the quote's size), NOT gap-hero-sub (tied to the
-    // bigger fs-title) - that read too wide here (Sasha 24.07 v22 slide 34).
+    // bigger fs-title) - that read too wide here.
     if who != none {
       v(gap-head-body)
       text(font: font-body, size: fs-item, weight: "medium", fill: ink-soft, who)
@@ -394,15 +392,14 @@
 
 // Steps - a row of tall step CARDS filling the content band (like compare):
 // each step is a rounded card with the number prominent at the top and the
-// step text below it. Bare numbers next to text didn't read as steps at all
-// (Sasha, 24.07 "не понимаю где здесь шаги").
+// step text below it. Bare numbers next to text didn't read as steps at all.
 #let steps(title, items, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, hd(fs-head, title))
   let n = items.len()
   let w = (CW / 1mm - gut-card * (n - 1)) / n
   // step cards are sized to their content (number + a short line), not stretched
   // to the whole content floor - the full-height version left a dead hole under
-  // the text (Sasha 24.07). Fixed height, vertically centred in the content band.
+  // the text. Fixed height, vertically centred in the content band.
   let h = 62
   let cy = Y2 + (125.975 - Y2 - h) / 2
   for (i, it) in items.enumerate() {
@@ -519,7 +516,7 @@
 
 // Timeline - a horizontal spine with a red node per stage; label AND description
 // both sit BELOW the node, stacked, so every stage reads the same distance from
-// its dot (no arbitrary above/below split - Sasha 24.07 v22 slide 28).
+// its dot (no arbitrary above/below split).
 #let timeline(title, steps, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, hd(fs-head, title))
   let n = steps.len()
@@ -645,7 +642,7 @@
 // Metric number size is UNIFIED: a single hero figure (stat, big-metric) is
 // fs-title (36.6); a GROUP of figures (kpis, metric-cols, metric-grid,
 // metric-list) is fs-lead2 (23.4) - smaller reads calmer in a row, and every
-// multi-metric slide now matches (Sasha 24.07 v22: "все должно быть
+// multi-metric slide now matches ("все должно быть
 // унифицировано", slide 22's smaller number read nicer). num->label gap is the
 // same gap-label-body everywhere.
 
@@ -664,7 +661,7 @@
       columns: (40mm, auto), column-gutter: 7mm, align: (left, horizon),
       disp(fs-lead2, it.at(0)),
       // description is body size, not a tiny caption - there is room and normal
-      // text reads better here (Sasha 24.07 v22 slide 23).
+      // text reads better here.
       { lbl(it.at(1), fill: ink); v(2.4mm); bd(fs-desc, it.at(2)) },
     ))
   }
@@ -731,7 +728,7 @@
       box(width: 2 * nr * 1mm, height: 2 * nr * 1mm, radius: 50%, fill: accent))
     // Vertical tick from the EDGE of the node toward the text, not from its
     // centre: starting at the centre drew a dark line across the red disc
-    // (Sasha 25.07, "линии наезжают на круги").
+    //.
     place(top + left, dx: cx * 1mm - M,
       dy: (if up { y - tick } else { y + nr }) * 1mm - M,
       box(width: 0.8pt, height: (tick - nr) * 1mm, fill: ink))
@@ -745,7 +742,7 @@
         box(width: bw * 1mm, { note(ms.at(1)); v(2.4mm); lbl(ms.at(0), fill: ink) }))
     } else {
       // sit the date right at the tick end so the line reads as attached, not
-      // floating over empty air (Sasha 24.07 v24 slide 25).
+      // floating over empty air.
       at(bx, y + tick, bw, { lbl(ms.at(0), fill: ink); v(2.4mm); note(ms.at(1)) })
     }
   }
@@ -874,8 +871,8 @@
     at(x0 + c * (cw + 6), top + r * rowh, cw, align(center, {
       avatar(14mm)
       v(3mm)
-      // name = same size as the role (fs-small), just bold - Sasha wanted it even
-      // smaller, one line, matching the role weight-only (24.07 v24 slide 36).
+      // name = same size as the role (fs-small), just bold: one line, separated
+      // from the role by weight alone.
       text(font: font-heading, size: fs-small, weight: "bold", fill: ink, mb.at(0))
       v(1.2mm)
       cap(mb.at(1))
@@ -892,7 +889,7 @@
   let w = (CW / 1mm - g * (n - 1)) / n
   // images sit higher and taller (there is room above), and the caption's
   // label->body gap is the SAME gap-label-body as everywhere else - the old
-  // tight gap made the label stick to its text (Sasha 24.07 v22 slide 43).
+  // tight gap made the label stick to its text.
   let ih = 60
   for (i, it) in items.enumerate() {
     at(16.9 + i * (w + g), 42, w, {

@@ -45,33 +45,53 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 cp "$TEMPLATE_DIR/slides.typ" "$WORK/"
-cp -R "$TEMPLATE_DIR/assets" "$WORK/assets"
+# Everything Typst reads through --root has to be inside the sandbox, so the
+# brand artwork is copied. Fonts are not: --font-path is free to point outside
+# it, and 6.5MB of typefaces per build is worth not copying.
+mkdir -p "$WORK/assets"
+find "$TEMPLATE_DIR/assets" -maxdepth 1 -type f -exec cp {} "$WORK/assets/" \;
 
 # Copy across every local image the deck points at, keeping the relative path so
 # `image=diagrams/x.png` still resolves inside the sandbox root.
 while IFS= read -r ref; do
   case "$ref" in
     http://*|https://*|"") continue ;;
-    /*) continue ;;   # absolute paths would escape the sandbox root
+    # Anything that could resolve outside the sandbox root. An absolute path is
+    # obvious; `../` is not, and without this a deck handed to you by someone
+    # else could write through `cp` to any path you can write - the sandbox is
+    # what keeps a build from touching the rest of the disk.
+    /*)   die "image path must stay inside the deck's folder: $ref" ;;
+    ..*|*/..*) die "image path must stay inside the deck's folder: $ref" ;;
   esac
   if [ -f "$SRC_DIR/$ref" ]; then
     mkdir -p "$WORK/$(dirname "$ref")"
     cp "$SRC_DIR/$ref" "$WORK/$ref"
-  elif [ ! -f "$WORK/$ref" ]; then   # may already be a template asset
-    echo "warning: image not found, a grey placeholder will show instead: $ref" >&2
   fi
 done < <(grep -ohE '[A-Za-z0-9_./-]+\.(png|jpg|jpeg|svg|webp|gif)' "$SRC" 2>/dev/null | sort -u || true)
 
 # deck.md -> Typst (warnings about over-long text go to stderr and are real)
 python3 "$TEMPLATE_DIR/slidegen.py" "$SRC" > "$WORK/deck.typ"
 
+# Check every image the generated deck actually asks for, rather than every path
+# that looked like a filename in the source. Typst's own failure names a file
+# inside a temp directory this script has already deleted, which tells the author
+# nothing; this names the file as they wrote it.
+while IFS= read -r want; do
+  [ -f "$WORK/$want" ] || die "image not found next to the deck: $want
+  put the file at $SRC_DIR/$want, or leave the image off that slide for a placeholder"
+done < <(grep -ohE '(img|image): "[^"]+"' "$WORK/deck.typ" | sed -E 's/^[a-z]+: "//; s/"$//' | sort -u)
+
 # theme (light|dark) from the deck.md frontmatter, or override with THEME=dark
 theme="${THEME:-$(sed -n '/^---/,/^---/p' "$SRC" | grep -oiE '^theme:[[:space:]]*[a-z]+' | head -1 | grep -oiE '[a-z]+$' || true)}"
 theme="${theme:-light}"
+case "$theme" in
+  light|dark) ;;
+  *) echo "error: theme must be light or dark, got '$theme'" >&2; exit 1 ;;
+esac
 
 typst compile "$WORK/deck.typ" "$OUT" \
   --root "$WORK" \
-  --font-path "$WORK/assets/fonts" \
+  --font-path "$TEMPLATE_DIR/assets/fonts" \
   --ignore-system-fonts \
   --input "theme=${theme}"
 

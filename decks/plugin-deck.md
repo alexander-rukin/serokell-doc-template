@@ -1,5 +1,5 @@
 ---
-theme: serokell
+theme: light
 ---
 
 @cover

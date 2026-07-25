@@ -5,8 +5,9 @@
 #
 #   ./test.sh            run everything
 #
-# Exits non-zero on the first real failure. Everything is written to a temp
-# directory; the repository is left untouched (that is itself one of the tests).
+# Runs everything, prints a pass/fail line per check, exits non-zero at the end
+# if any failed. Everything is written to a temp directory; the repository is
+# left untouched (that is itself one of the checks).
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -14,6 +15,9 @@ cd "$here"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+
+STAMP="$WORK/.stamp"
+: > "$STAMP"          # reference mtime: nothing in the repo may be newer at the end
 
 pass=0; fail=0
 ok()   { printf '  ok    %s\n' "$1"; pass=$((pass + 1)); }
@@ -41,8 +45,8 @@ for f in decks/*.md; do
   name="$(basename "$f")"
   err="$WORK/${name}.err"
   if ./render-deck.sh "$f" "$WORK/deck-${name%.md}.pdf" >/dev/null 2>"$err"; then
-    if grep -q '^warning:' "$err"; then
-      bad "$name" "length warnings: $(grep -c '^warning:' "$err") (text would be clipped)"
+    if grep -q 'holds about' "$err"; then
+      bad "$name" "length warnings: $(grep -c 'holds about' "$err") (text would be clipped)"
     else
       ok "$name ($(grep -oE '[0-9]+ slides' "$err" | head -1))"
     fi
@@ -142,22 +146,93 @@ else
   bad "no frontmatter" "the theme lookup aborted the build"
 fi
 
+head_ "build-deck.sh (the path a cloned repo takes)"
+# It writes inside the checkout, has its own theme lookup and page-count guard,
+# and nothing else in this suite touches it.
+if out=$(./build-deck.sh decks/plugin-deck.md "$WORK/bd.pdf" 2>&1) && [ -s "$WORK/bd.pdf" ]; then
+  if echo "$out" | grep -q '8 slides, 8 pages'; then
+    ok "builds a deck and counts its pages"
+  else
+    bad "build-deck.sh page count" "$(echo "$out" | tail -1)"
+  fi
+else
+  bad "build-deck.sh" "$(echo "$out" | tail -2)"
+fi
+rm -f _plugin-deck.typ
+
+head_ "Author mistakes that used to crash or corrupt the build"
+
+printf '@statement\n# Q3 // Q4 and/or later\n' > "$WORK/slashes.md"
+if ./render-deck.sh "$WORK/slashes.md" "$WORK/slashes.pdf" >/dev/null 2>&1 \
+   && pdftotext "$WORK/slashes.pdf" - 2>/dev/null | grep -q 'Q3 // Q4'; then
+  ok "'//' in author text stays text (it opens a Typst comment)"
+else
+  bad "double slash" "the deck failed to build or the text was swallowed"
+fi
+
+printf '@team perrow=two\n# T\n- A | role\n- B | role\n' > "$WORK/badnum.md"
+out=$(./render-deck.sh "$WORK/badnum.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "must be a whole number"; then
+  ok "a non-numeric option is explained, not a Python traceback"
+else
+  bad "numeric option" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+printf 'Just prose, no layout tag anywhere\n' > "$WORK/notag.md"
+out=$(./render-deck.sh "$WORK/notag.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "must start with a layout tag"; then
+  ok "a deck with no tag says so, instead of guessing a layout"
+else
+  bad "no tag" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+printf '@split image=nope.png\n# T\nBody\n' > "$WORK/noimg.md"
+out=$(./render-deck.sh "$WORK/noimg.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "image not found next to the deck"; then
+  ok "a missing image names the file, not a temp path"
+else
+  bad "missing image" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+head_ "A deck cannot write outside its own folder"
+# A deck.md is something colleagues send each other, so `cp` must not be
+# reachable with a path that climbs out of the build sandbox.
+rm -f "$WORK/escaped.png"
+cp assets/sample-photo.jpg "$WORK/elsewhere-src.png" 2>/dev/null || true
+mkdir -p "$WORK/trav"
+cp assets/sample-photo.jpg "$WORK/trav/pic.png"
+printf '@split image=../escaped.png\n# T\nBody\n' > "$WORK/trav/deck.md"
+cp assets/sample-photo.jpg "$WORK/escaped-source.png"
+out=$(./render-deck.sh "$WORK/trav/deck.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "must stay inside the deck"; then
+  ok "an image path with '..' is refused"
+else
+  bad "path traversal" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
 # ------------------------------------------- read-only install compatibility
 head_ "Nothing is written inside the template"
 mkdir -p "$WORK/elsewhere"
 cp assets/sample-photo.jpg "$WORK/elsewhere/pic.jpg"
 printf '@split image=pic.jpg\n# From another directory\nThe image sits next to the deck.\n' > "$WORK/elsewhere/deck.md"
-before=$(git status --porcelain | sort)
 if ./render-deck.sh "$WORK/elsewhere/deck.md" >/dev/null 2>&1 && [ -s "$WORK/elsewhere/deck.pdf" ]; then
   ok "a deck outside the repo builds, PDF lands next to it"
 else
   bad "external deck" "did not produce $WORK/elsewhere/deck.pdf"
 fi
-after=$(git status --porcelain | sort)
-if [ "$before" = "$after" ]; then
-  ok "the working tree is unchanged by a build"
+
+# Compare against the snapshot taken BEFORE the first build in this run, and
+# include ignored files: a plugin install is read-only, so a build that writes
+# anything here at all - gitignored or not - breaks that install.
+# __pycache__ is excluded on purpose: CPython writes it when test.sh imports
+# slidegen, and silently skips it when the directory is read-only, so it cannot
+# break a plugin install. Anything else appearing here can.
+after_tree=$(find . -name .git -prune -o -name __pycache__ -prune -o \
+                    -type f -newer "$STAMP" -print 2>/dev/null | sort)
+if [ -z "$after_tree" ]; then
+  ok "no file inside the template was written during the whole run"
 else
-  bad "build dirtied the repository" "$(diff <(echo "$before") <(echo "$after") | head -3 | tr '\n' ' ')"
+  bad "a build wrote inside the template" "$(echo "$after_tree" | head -3 | tr '\n' ' ')"
 fi
 
 # --------------------------------------------------------------------- done

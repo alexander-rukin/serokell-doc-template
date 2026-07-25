@@ -131,7 +131,13 @@ Treat every such warning as a real defect: shorten the text or split the slide.
 | `@annotated` | heading | `image=path` | 1-4 x `- left\|right \| 40 \| Label` |
 
 Leave the image path empty (`- | Label | text`) to get the grey placeholder at
-the same size - useful while the screenshot does not exist yet.
+the same size - useful while the screenshot does not exist yet. Pointing at a
+file that is not there is a different thing and stops the build, naming the
+file: a typo in a path should not quietly become a grey box in a client deck.
+
+Image paths are relative to the deck and must stay inside its folder. `../` is
+refused - the build copies what a deck points at, and a deck is something people
+send each other.
 
 ## The whole catalog, rendered
 

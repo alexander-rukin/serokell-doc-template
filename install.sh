@@ -85,11 +85,14 @@ fi
 
 # --- marketplace ------------------------------------------------------------
 say "Registering the marketplace..."
-if claude plugin marketplace list 2>/dev/null | grep -q "$MARKET"; then
-  claude plugin marketplace update "$MARKET" >/dev/null 2>&1 || true
+# `</dev/null` on every claude call: under `curl ... | bash` stdin IS the rest of
+# this script, so a subcommand that ever prompts would swallow the remaining
+# steps and they would silently never run.
+if claude plugin marketplace list </dev/null 2>/dev/null | grep -qx "[[:space:]]*$MARKET[[:space:]]*"; then
+  claude plugin marketplace update "$MARKET" </dev/null >/dev/null 2>&1 || true
   echo "  already registered, refreshed it"
 else
-  claude plugin marketplace add "$REPO" >/dev/null
+  claude plugin marketplace add "$REPO" </dev/null >/dev/null
   echo "  added"
 fi
 
@@ -97,8 +100,14 @@ fi
 say "Installing the plugin..."
 # Reinstall rather than update: refreshing the marketplace manifest does not
 # always pull down new plugin files.
-claude plugin uninstall "$PLUGIN" >/dev/null 2>&1 || true
-claude plugin install "$PLUGIN" >/dev/null
+had_it=no
+claude plugin list </dev/null 2>/dev/null | grep -q "$PLUGIN" && had_it=yes
+claude plugin uninstall "$PLUGIN" </dev/null >/dev/null 2>&1 || true
+if ! claude plugin install "$PLUGIN" </dev/null >/dev/null; then
+  echo "  install failed." >&2
+  [ "$had_it" = yes ] && echo "  your previous copy was removed in the process - rerun this script once you are back online." >&2
+  exit 1
+fi
 echo "  installed"
 
 # --- autoUpdate -------------------------------------------------------------
@@ -121,11 +130,17 @@ try:
 except FileNotFoundError:
     data = {}
 except json.JSONDecodeError:
-    raise SystemExit(f"  settings file is not valid JSON, leaving it alone: {settings}")
+    # Not our file to repair - and not a reason to report a successful install
+    # as a failure, so say what to do by hand and leave with a clean status.
+    print(f"  skipped: {settings} is not valid JSON, leaving it alone.")
+    print(f'  add "autoUpdate": true under extraKnownMarketplaces.{market} yourself.')
+    raise SystemExit(0)
 
-# Back up before touching anything the user owns.
-if os.path.exists(settings):
-    shutil.copy(settings, settings + ".bak")
+# Back up before touching anything the user owns - but only the first time, or a
+# second run would overwrite the pre-install original with our own output.
+backup = settings + ".bak"
+if os.path.exists(settings) and not os.path.exists(backup):
+    shutil.copy(settings, backup)
 
 entry = data.setdefault("extraKnownMarketplaces", {}).setdefault(market, {})
 # Only fill in the source if it is missing; the CLI may have written its own

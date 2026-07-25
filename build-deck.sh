@@ -40,6 +40,10 @@ python3 "${here}/slidegen.py" "$md" > "$gen"
 # `pipefail` a non-matching grep would otherwise abort the script silently)
 theme="${THEME:-$(sed -n '/^---/,/^---/p' "$md" | grep -oiE '^theme:[[:space:]]*[a-z]+' | head -1 | grep -oiE '[a-z]+$' || true)}"
 theme="${theme:-light}"
+case "$theme" in
+  light|dark) ;;
+  *) echo "error: theme must be light or dark, got '$theme'" >&2; exit 1 ;;
+esac
 
 typst compile \
   --font-path "${here}/assets/fonts" \

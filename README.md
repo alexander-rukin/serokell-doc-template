@@ -46,9 +46,12 @@ It never installs Homebrew itself and never asks for sudo. Pass `SKIP_TYPST=1`
 to handle Typst yourself.
 
 The CLI has no flag for automatic updates, so the script writes `autoUpdate`
-into `~/.claude/settings.json` for you. It backs the file up first, only adds
-that one key, and is safe to run again. Without it nothing checks for a newer
-version and you stay on whatever you installed.
+into `~/.claude/settings.json` for you. It copies the file to
+`settings.json.bak` first (once - a later run will not overwrite that original),
+adds one key, and rewrites the file as standard two-space JSON, so your own
+formatting is reflowed even though your settings are kept. It is safe to run
+again. Without it nothing checks for a newer version and you stay on whatever
+you installed.
 
 To update by hand instead:
 

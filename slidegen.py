@@ -42,6 +42,23 @@ KNOWN_KEYS = {
 
 # ---------------------------------------------------------------- text helpers
 
+def _int_opt(layout, name, raw):
+    """A whole-number option off the @layout line, or an error naming it."""
+    try:
+        return int(raw)
+    except ValueError:
+        die("@%s: %s= must be a whole number, got %r" % (layout, name, raw))
+
+
+def _num(layout, name, raw):
+    """A number inside an item, or an error naming what was expected."""
+    try:
+        return float(raw)
+    except ValueError:
+        die("@%s: %s must be a number (0 at the top, 100 at the bottom), got %r"
+            % (layout, name, raw))
+
+
 def esc(s):
     """Escape Typst markup-significant chars so author text stays literal."""
     if s is None:
@@ -49,6 +66,11 @@ def esc(s):
     s = s.replace("\\", "\\\\")
     for ch in "#[]*_`$<>@~":
         s = s.replace(ch, "\\" + ch)
+    # `//` starts a Typst line comment, which would swallow the rest of the
+    # generated line including its closing bracket - the author would get
+    # "unclosed delimiter" pointing at a temp file. Costs nothing to escape, and
+    # "and/or", "Q3 // Q4" and paths are ordinary things to write on a slide.
+    s = s.replace("//", "\\/\\/")
     return s
 
 
@@ -79,6 +101,11 @@ def die(msg):
     raise SystemExit("deck.md: " + msg)
 
 
+def warn_line(msg):
+    """Something the author probably did not mean, that is not fatal."""
+    print("warning: " + msg, file=sys.stderr)
+
+
 # ---------------------------------------------------------------- deck parsing
 
 def split_slides(text):
@@ -93,30 +120,44 @@ def split_slides(text):
     # Split on lines starting with @layout - but NOT inside a code fence, where
     # `@compare` is sample text, not a new slide (a deck about this format shows
     # its own source; without this guard the example silently became a slide).
-    chunks, cur, in_fence = [], [], False
+    # Each chunk carries whether it actually started with a tag: text sitting
+    # before the first @layout is not slide 1, it is a mistake, and saying so
+    # beats reporting "unknown layout @Just" from its first word.
+    chunks, cur, tagged, in_fence = [], [], False, False
     for ln in text.splitlines():
         if ln.strip().startswith("```"):
             in_fence = not in_fence
         elif not in_fence and re.match(r"@[\w-]", ln):
-            chunks.append("\n".join(cur))
-            cur = []
+            chunks.append((tagged, "\n".join(cur)))
+            cur, tagged = [], True
             ln = ln[1:]           # drop the leading @, as the old split did
         cur.append(ln)
-    chunks.append("\n".join(cur))
+    chunks.append((tagged, "\n".join(cur)))
 
     slides = []
-    for ch in chunks:
+    for is_tagged, ch in chunks:
         ch = ch.strip("\n")
         if not ch.strip():
             continue
+        if not is_tagged:
+            first = ch.strip().splitlines()[0][:60]
+            die("every slide must start with a layout tag such as '@statement'.\n"
+                "  This text has none: %r\n"
+                "  See FORMAT.md for the layouts." % first)
         head, _, rest = ch.partition("\n")
         toks = head.split()
         layout = toks[0]
         opts = {}
-        for t in toks[1:]:
-            if "=" in t:
-                k, v = t.split("=", 1)
+        for tok in toks[1:]:
+            if "=" in tok:
+                k, v = tok.split("=", 1)
                 opts[k] = v.strip('"')
+            else:
+                # a bare word here is almost always an option with a space in it
+                # (`image=my photo.png`), and silently dropping it loses the image
+                warn_line("@%s: ignoring %r on the layout line - options are "
+                          "key=value with no spaces; put wordier values on a "
+                          "'key: value' line instead" % (layout, tok))
         slides.append((layout, opts, rest))
     return fm, slides
 
@@ -447,7 +488,7 @@ def _team(layout, opts, f):
     args = [content(f["title"] or ""),
             pair_list(f, layout, 2, "Name | role", 2, 12)]
     if opts.get("perrow"):
-        args.append("perrow: " + str(int(opts["perrow"])))
+        args.append("perrow: " + str(_int_opt(layout, "perrow", opts["perrow"])))
     return "#team(" + ", ".join(args) + ")"
 
 
@@ -474,7 +515,7 @@ def _image_full(layout, opts, f):
 def _mobile(layout, opts, f):
     args = [content(f["title"] or ""), content(f["body"])]
     if opts.get("n"):
-        args.append("n: " + str(int(opts["n"])))
+        args.append("n: " + str(_int_opt(layout, "n", opts["n"])))
     return "#mobile-showcase(" + ", ".join(args) + ")"
 
 
@@ -488,7 +529,7 @@ def _annotated(layout, opts, f):
         side, y, label = parts(it, 3, layout, "left|right | 40 | Label")
         if side not in ("left", "right"):
             die("@annotated: side must be 'left' or 'right', got %r" % side)
-        notes.append('("%s", %s, %s)' % (side, float(y), content(label)))
+        notes.append('("%s", %s, %s)' % (side, _num(layout, "position", y), content(label)))
     args = []
     if f["title"]:
         args.append("title: " + content(f["title"]))

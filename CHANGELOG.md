@@ -28,6 +28,40 @@ length budget and warns before the PDF exists. It also fixes a deck with no
 frontmatter failing to build at all, silently: with `pipefail`, a non-matching
 `grep` in the theme lookup aborted the script without printing anything.
 
+**Hardening before the repository went public.** A review of the whole diff
+found several things worth naming:
+
+- An image path could climb out of the build sandbox. `image=../x.png` made the
+  build copy through `..`, so a `deck.md` received from someone else could write
+  anywhere the person running it can write. Both entry points now refuse a path
+  that leaves the document's folder.
+- A missing image was documented as falling back to a grey placeholder and in
+  fact killed the build with a Typst error naming a temp directory that had
+  already been deleted. It now stops with the filename as the author wrote it,
+  and the placeholder is what you get by leaving the image off the slide.
+- `//` in author text opened a Typst comment and swallowed the rest of the line,
+  reported as "unclosed delimiter" in a generated file the author never sees.
+- Malformed numeric options (`perrow=two`) raised a Python traceback instead of
+  saying which option was wrong; a deck with no layout tag at all reported an
+  unknown layout named after its first word.
+- The installer could leave someone with no plugin at all if the download failed
+  after the old copy was removed, overwrote its own settings backup on a second
+  run, and reported failure after a successful install when the settings file
+  was not valid JSON. Its `claude` calls now read from `/dev/null`, so a prompt
+  cannot eat the rest of the script under `curl | bash`.
+- One test could not fail: it snapshotted the tree after the builds it was meant
+  to police, and everything a build writes is gitignored. It now compares file
+  mtimes against a stamp taken before anything runs. The suite grew from 16
+  checks to 22, covering `build-deck.sh`, path traversal, and the parser
+  failures above.
+
+Exploration files (nine background-artwork iterations, cover variants, a broken
+sample) left the repository root; the two type specimens moved to
+`dev/specimens/`. Assets now carry their provenance: `assets/CREDITS.md` records
+every one, the bundled Golos Text ships its OFL licence, the sample photograph
+was replaced with a public-domain one, and `NOTICE` states that the Serokell
+marks and brand artwork are not covered by the repository's Apache-2.0 licence.
+
 ## 0.4.0
 
 **The installer sets up Typst as well.** It used to print instructions and leave

@@ -58,7 +58,12 @@ cp "$SRC" "$WORK/content/doc.md"
 while IFS= read -r ref; do
   case "$ref" in
     http://*|https://*|data:*|"") continue ;;
-    /*) continue ;;   # absolute paths would escape the sandbox root
+    # Anything that could resolve outside the sandbox root. An absolute path is
+    # obvious; `../` is not, and without this a document handed to you by
+    # someone else could write through `cp` to any path you can write - the
+    # sandbox is what keeps a build from touching the rest of the disk.
+    /*)   echo "warning: image path must stay inside the document's folder, skipping: $ref" >&2; continue ;;
+    ..*|*/..*) echo "warning: image path must stay inside the document's folder, skipping: $ref" >&2; continue ;;
   esac
   if [ -f "$SRC_DIR/$ref" ]; then
     mkdir -p "$WORK/content/$(dirname "$ref")"

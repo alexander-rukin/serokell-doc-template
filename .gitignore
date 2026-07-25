@@ -7,3 +7,7 @@ out/
 # generated decks
 _*.typ
 decks/*.pdf
+
+# python bytecode (test.sh imports slidegen)
+__pycache__/
+*.pyc
