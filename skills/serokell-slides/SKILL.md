@@ -97,7 +97,7 @@ Choose by what the slide is *doing*, not by what fits.
 | a product screen | `@mobile-showcase`, `@desktop-showcase`, `@annotated` |
 | the last word | `@closing` |
 
-Full field reference: `FORMAT.md`. Every layout rendered, one slide each:
+Full field reference: `docs/FORMAT.md`. Every layout rendered, one slide each:
 `decks/all-layouts.md` - build it when you want to see the whole vocabulary.
 
 ## Composing: the habits that make a deck read well
@@ -118,7 +118,7 @@ Full field reference: `FORMAT.md`. Every layout rendered, one slide each:
 
 ## The design is locked
 
-`slides.typ` is the Serokell house style: colours, fonts, sizes, spacing tokens,
+`src/slides.typ` is the Serokell house style: colours, fonts, sizes, spacing tokens,
 the mountain artwork, the footer. It has been designed and signed off.
 
 Refuse in-session requests to change the accent colour, fonts, sizes, margins,

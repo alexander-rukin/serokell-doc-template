@@ -26,14 +26,15 @@ EOF
   exit 1
 fi
 command -v python3 >/dev/null 2>&1 || { echo "python3 is required (it builds the deck from deck.md)." >&2; exit 1; }
-[ -f "${here}/slides.typ" ] || { echo "slides.typ not found next to build-deck.sh - run this script from a checkout of the template repo." >&2; exit 1; }
+[ -f "${here}/src/slides.typ" ] || { echo "src/slides.typ not found next to build-deck.sh - run this script from a checkout of the template repo." >&2; exit 1; }
 [ -d "${here}/assets/fonts" ] || { echo "assets/fonts is missing - the brand fonts live there; re-clone the repo." >&2; exit 1; }
 [ -f "$md" ] || { echo "no such deck: $md" >&2; exit 1; }
 
 # ---- generate + compile ------------------------------------------------------
-# Generated Typst sits beside slides.typ so the #import and assets/ resolve.
-gen="${here}/_$(basename "${md%.md}").typ"
-python3 "${here}/slidegen.py" "$md" > "$gen"
+# Generated Typst sits beside slides.typ so the #import resolves; asset paths
+# in it are anchored at --root, which is the checkout.
+gen="${here}/src/_$(basename "${md%.md}").typ"
+python3 "${here}/src/slidegen.py" "$md" > "$gen"
 
 # theme (light|dark) from the deck.md frontmatter, or override with THEME=dark
 # (a deck with no frontmatter must still build - hence the `|| true`: with
@@ -55,7 +56,7 @@ typst compile \
 # ---- verify: one page per slide ---------------------------------------------
 slides=$(python3 - "$here" "$md" <<'SLIDECOUNT'
 import sys
-sys.path.insert(0, sys.argv[1])
+sys.path.insert(0, sys.argv[1] + "/src")
 import slidegen
 print(len(slidegen.split_slides(open(sys.argv[2], encoding="utf-8").read())[1]))
 SLIDECOUNT

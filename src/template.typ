@@ -77,9 +77,9 @@
 #let mountains(peak-height: art-peak-height) = {
   box(width: page-width, height: peak-height, {
     // Left: pale range across the full page width, sitting on the baseline.
-    place(bottom + left, image("assets/footer-mountains-left.png", width: page-width))
+    place(bottom + left, image("/assets/footer-mountains-left.png", width: page-width))
     // Right: high-contrast peak, carrying the Serokell mark, drawn on top.
-    place(bottom + right, image("assets/footer-mountains-right.png", height: peak-height))
+    place(bottom + right, image("/assets/footer-mountains-right.png", height: peak-height))
   })
 }
 

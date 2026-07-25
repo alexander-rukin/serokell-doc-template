@@ -28,7 +28,7 @@
 #let code-bg  = if dark { rgb("#1E2024") } else { rgb("#F0F0F0") }
 // brand shell that lives OUTSIDE the template grid (cover art + corner furniture)
 #let accent   = rgb("#D92B04")
-#let mark-img = if dark { "assets/serokell-mark-light.svg" } else { "assets/serokell-mark-dark.svg" }
+#let mark-img = if dark { "/assets/serokell-mark-light.svg" } else { "/assets/serokell-mark-dark.svg" }
 
 // ---- fonts (ours - the one thing kept from our brand) -----------------------
 #let font-emoji   = "Noto Color Emoji"
@@ -210,10 +210,10 @@
   // single full-width mountain footer (one cohesive band, fades into the white
   // page at the top; tall peak on the right). Replaces the band + mirrored peak.
   place(bottom + left, dx: -M, dy: M,
-    image("assets/brand-footer-long.png", width: W))
+    image("/assets/brand-footer-long.png", width: W))
   // Mark in the same bottom-right footer spot as every other slide (white so it
   // reads on the peak) - consistent logo position across the whole deck.
-  place(bottom + right, dy: FOOT_DROP, box(image("assets/serokell-mark-light.svg", height: 5mm)))
+  place(bottom + right, dy: FOOT_DROP, box(image("/assets/serokell-mark-light.svg", height: 5mm)))
   // accent tick pinned to the TOP-LEFT of the content grid, not floating by the
   // title - reads as a brand marker on the frame, not a heading underline
   place(top + left, accent-bar)

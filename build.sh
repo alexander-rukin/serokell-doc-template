@@ -46,7 +46,7 @@ if [ ! -f "$SRC" ]; then
 fi
 
 # Advisory checks on the author's Markdown. Hints only; never blocks the build.
-[ -x "$REPO_ROOT/md-advice.sh" ] && "$REPO_ROOT/md-advice.sh" "$SRC"
+[ -x "$REPO_ROOT/src/md-advice.sh" ] && "$REPO_ROOT/src/md-advice.sh" "$SRC"
 
 NAME="$(basename "${SRC%.md}")"
 OUT="out/$NAME.pdf"
@@ -67,7 +67,7 @@ if [ "${1:-}" = "--watch" ]; then
   CMD=watch
 fi
 
-typst "$CMD" main.typ "$OUT" \
+typst "$CMD" src/main.typ "$OUT" \
   --root . \
   --font-path assets/fonts \
   --ignore-system-fonts \

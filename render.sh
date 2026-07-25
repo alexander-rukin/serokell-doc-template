@@ -42,12 +42,13 @@ fi
 mkdir -p "$(dirname "$OUT")"
 
 # Advisory checks on the author's Markdown. Hints only; never blocks the build.
-[ -x "$TEMPLATE_DIR/md-advice.sh" ] && "$TEMPLATE_DIR/md-advice.sh" "$SRC"
+[ -x "$TEMPLATE_DIR/src/md-advice.sh" ] && "$TEMPLATE_DIR/src/md-advice.sh" "$SRC"
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-cp "$TEMPLATE_DIR/template.typ" "$TEMPLATE_DIR/main.typ" "$WORK/"
+mkdir -p "$WORK/src"
+cp "$TEMPLATE_DIR/src/template.typ" "$TEMPLATE_DIR/src/main.typ" "$WORK/src/"
 cp -R "$TEMPLATE_DIR/assets" "$WORK/assets"
 
 SRC_REAL="$(cd "$SRC_DIR" && pwd -P)"
@@ -105,7 +106,7 @@ else
   echo "warning: footer artwork missing - building with a placeholder." >&2
 fi
 
-typst compile "$WORK/main.typ" "$OUT" \
+typst compile "$WORK/src/main.typ" "$OUT" \
   --root "$WORK" \
   --font-path "$WORK/assets/fonts" \
   --ignore-system-fonts \

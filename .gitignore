@@ -5,9 +5,10 @@ out/
 .claude/settings.local.json
 
 # generated decks
+src/_*.typ
 _*.typ
 decks/*.pdf
 
-# python bytecode (test.sh imports slidegen)
+# python bytecode (dev/test.sh imports slidegen)
 __pycache__/
 *.pyc

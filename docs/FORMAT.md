@@ -157,5 +157,5 @@ Edit the `.md`, then:
 ./build-deck.sh decks/your-deck.md
 ```
 
-The layout library (`slides.typ`) and brand assets stay locked; you only ever
+The layout library (`src/slides.typ`) and brand assets stay locked; you only ever
 touch the deck's markdown.

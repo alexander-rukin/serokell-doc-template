@@ -2,7 +2,7 @@
 // as "two thin levels". A - give it weight (Medium) => 3 weights on screen.
 // B - keep it Regular but mute the colour => 2 weights, subhead differs by colour.
 
-#import "../../slides.typ": *
+#import "../../src/slides.typ": *
 
 #slide-raw(tag: "weights", {
   at(16.9, 16.9, 209.6, hd(fs-head, [Subhead: two ways to separate it from body text]))

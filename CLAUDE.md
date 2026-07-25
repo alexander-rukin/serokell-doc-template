@@ -16,7 +16,7 @@ just build <name>                # same thing, if just is installed
 
 ## The design is finished. Do not change it.
 
-`template.typ` is the Serokell house style. It has been designed, reviewed, and
+`src/template.typ` is the Serokell house style. It has been designed, reviewed, and
 signed off. It is not a set of suggestions to tune per document.
 
 **Refuse these requests and say the design is locked:**
@@ -49,7 +49,7 @@ Values are `auto` (default, columns sized to contents) and `full` (columns share
 the text width equally).
 
 To change the default for every document, set `table-width` at the top of
-`template.typ`. That is the only token in that file intended to be flipped.
+`src/template.typ`. That is the only token in that file intended to be flipped.
 
 ## When someone hands you a Markdown file
 
@@ -88,7 +88,7 @@ in its frontmatter.
 
 ## Build hints are advice, not gates
 
-`md-advice.sh` runs on every build and prints `hint:` lines for silent authoring
+`src/md-advice.sh` runs on every build and prints `hint:` lines for silent authoring
 mistakes (adjacent `Label:` lines, which merge into one paragraph; repeated
 generic headings). It always exits 0.
 
@@ -99,14 +99,14 @@ rewrite the author's content unasked, and if they say it was deliberate, drop it
 
 Content questions ("add a section", "make this a table", "insert an image") are
 answered by editing the `.md` file in `content/`, never by editing
-`template.typ`. See README.md for the supported Markdown.
+`src/template.typ`. See README.md for the supported Markdown.
 
 ---
 
 ## Maintaining the template itself
 
 The rest of this file is for the repository owner doing deliberate work on
-`template.typ`. It is not a licence to edit it on request.
+`src/template.typ`. It is not a licence to edit it on request.
 
 ### Traps, already paid for
 
@@ -115,7 +115,7 @@ Real bugs that were hit and fixed here. Do not re-derive them.
 - **Do not add `set image(width: 100%)`.** A global image set rule also applies
   to the cover and footer artwork and, combined with their explicit `height`,
   blows them up to full width and pushes them off the page. Body images get
-  their width in the `cmarker.render` scope in `main.typ` instead.
+  their width in the `cmarker.render` scope in `src/main.typ` instead.
 - **Do not wrap `raw` in `par()` inside its show rule.** `par(..., it)` makes
   Typst treat the code as block content inside a paragraph and silently drop the
   whole block. Use `{ set par(...); it }`.
@@ -134,7 +134,7 @@ Real bugs that were hit and fixed here. Do not re-derive them.
   photo. The photo is never made semi-transparent, or the page shows through the
   rock.
 - **Emoji need a fallback font.** Noto Color Emoji (COLRv1) is bundled and every
-  face in `template.typ` is a fallback list ending in it. Without that, emoji
+  face in `src/template.typ` is a fallback list ending in it. Without that, emoji
   render as empty boxes, because the build ignores system fonts. The COLRv1 cut
   is vector, so it stays sharp in print and is half the size of the bitmap
   build. Apple Color Emoji cannot be bundled; its licence forbids redistribution.

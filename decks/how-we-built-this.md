@@ -138,9 +138,9 @@ lead: They come up on almost every deck
 # Where things live
 head: File | What it is
 - deck.md | Your deck: one tag plus text per slide
-- FORMAT.md | Every layout and its fields
+- docs/FORMAT.md | Every layout and its fields
 - decks/all-layouts.md | One slide per layout, rendered
-- slides.typ | The layout library and the locked brand
+- src/slides.typ | The layout library and the locked brand
 
 @section
 # What we learned

@@ -21,7 +21,7 @@ lead: Markdown in. A branded PDF out.
 @cards
 # Three files, one role each
 lead: Separating those roles is the whole trick - it keeps the author out of layout code for good.
-- template.typ | Every token, the cover, the footer. The brand lives here and nowhere else.
+- src/template.typ | Every token, the cover, the footer. The brand lives here and nowhere else.
 - render / main | The shared wrapper: path, frontmatter, body. Never edited per document.
 - content/md | The author's territory. Plain Markdown, nothing else.
 

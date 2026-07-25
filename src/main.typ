@@ -2,7 +2,7 @@
 // Generic wrapper. Never edit this to write a document - it is driven entirely
 // by --input flags from the build script:
 //
-//   typst compile main.typ out/foo.pdf \
+//   typst compile src/main.typ out/foo.pdf \
 //     --font-path assets/fonts \
 //     --input doc=content/foo.md \
 //     --input art=true
@@ -14,7 +14,7 @@
 #let doc-path = sys.inputs.at("doc", default: "content/example-proposal.md")
 #let has-art = sys.inputs.at("art", default: "true") == "true"
 
-#let raw-src = read(doc-path)
+#let raw-src = read("/" + doc-path)
 #let (meta, body-src) = split-frontmatter(raw-src)
 
 // Images referenced in the Markdown are written relative to the .md file, but
@@ -26,7 +26,7 @@
 }
 
 #let resolve(path) = {
-  if path.starts-with("/") { path.slice(1) } else { doc-dir + path }
+  if path.starts-with("/") { path } else { "/" + doc-dir + path }
 }
 
 // No frontmatter title means there is nothing to put on a cover, so the

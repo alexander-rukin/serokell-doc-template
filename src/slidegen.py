@@ -92,7 +92,9 @@ def path_lit(p):
     if '"' in p or "\\" in p:
         die('image path must not contain quotes or backslashes: %s' % p)
     IMAGES.append(p)
-    return '"' + p + '"'
+    # Anchored at the project root, so the same literal resolves whether the
+    # generated file sits in src/ of a checkout or in a build sandbox.
+    return '"/' + p.lstrip("/") + '"'
 
 
 def arr(items):

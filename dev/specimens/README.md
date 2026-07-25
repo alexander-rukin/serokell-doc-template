@@ -14,5 +14,5 @@ typst compile dev/specimens/typescale.typ --root . --font-path assets/fonts --ig
 
 Layout exploration does not live here. It lives in git history: the slide
 library went through nine background-artwork iterations and a set of cover
-variants before `slides.typ` settled, and keeping those files at the repo root
+variants before `src/slides.typ` settled, and keeping those files at the repo root
 made a template look like someone's sketchbook.

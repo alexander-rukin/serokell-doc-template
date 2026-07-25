@@ -3,14 +3,15 @@
 # silent here - a layout the author surface cannot reach, text clipped instead of
 # reflowed, a deck that builds only because it happens to have frontmatter.
 #
-#   ./test.sh            run everything
+#   ./dev/test.sh        run everything
 #
 # Runs everything, prints a pass/fail line per check, exits non-zero at the end
 # if any failed. Everything is written to a temp directory; the repository is
 # left untouched (that is itself one of the checks).
 set -uo pipefail
 
-here="$(cd "$(dirname "$0")" && pwd)"
+# The suite drives the entry points as a user would, from the repo root.
+here="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$here"
 
 WORK="$(mktemp -d)"
@@ -109,12 +110,12 @@ fi
 # every layout the generator emits must exist in the library
 undefined=""
 while IFS= read -r fn; do
-  grep -qE "^#let ${fn}\(" slides.typ || undefined="$undefined $fn"
-done < <(grep -ohE '"#[a-z0-9-]+\(' slidegen.py | sed 's/"#//; s/($//; s/(//' | sort -u)
+  grep -qE "^#let ${fn}\(" src/slides.typ || undefined="$undefined $fn"
+done < <(grep -ohE '"#[a-z0-9-]+\(' src/slidegen.py | sed 's/"#//; s/($//; s/(//' | sort -u)
 if [ -z "$undefined" ]; then
-  ok "every emitted call exists in slides.typ"
+  ok "every emitted call exists in src/slides.typ"
 else
-  bad "generator calls layouts slides.typ does not define" "$undefined"
+  bad "generator calls layouts src/slides.typ does not define" "$undefined"
 fi
 
 # ------------------------------------------------------------ error handling
@@ -187,7 +188,7 @@ if out=$(./build-deck.sh decks/plugin-deck.md "$WORK/bd.pdf" 2>&1) && [ -s "$WOR
 else
   bad "build-deck.sh" "$(echo "$out" | tail -2)"
 fi
-rm -f _plugin-deck.typ
+rm -f src/_plugin-deck.typ
 
 head_ "Author mistakes that used to crash or corrupt the build"
 

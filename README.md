@@ -128,9 +128,9 @@ template directory. The builder warns when a slide has more text than its layout
 holds (overflowing text is clipped, not reflowed) and when the page count stops
 matching the slide count.
 
-- `FORMAT.md` - the deck.md reference: every layout, its fields, its items.
+- `docs/FORMAT.md` - the deck.md reference: every layout, its fields, its items.
 - `decks/all-layouts.md` - one slide per layout; build it to see the vocabulary.
-- `slides.typ` - the layout library and the locked brand shell.
+- `src/slides.typ` - the layout library and the locked brand shell.
 
 ---
 
@@ -260,7 +260,7 @@ tables: full
 ```
 
 To change the default for every document instead, set `table-width` at the top
-of `template.typ`. Column alignment from the colons works the same in both
+of `src/template.typ`. Column alignment from the colons works the same in both
 modes.
 
 One limit worth knowing: a cell cannot contain a real bulleted list or a code
@@ -278,7 +278,7 @@ See `content/example-proposal.md` for a worked example of every feature above.
 
 ## Changing the branding
 
-All of it lives in `template.typ`, at the top of the file:
+All of it lives in `src/template.typ`, at the top of the file:
 
 ```typst
 #let accent = rgb("#D92B04")     // Serokell red
@@ -301,16 +301,34 @@ download into `assets/fonts/` and reference the family by name.
 
 ## Repo layout
 
+What you type lives at the root; everything it drives lives in a folder.
+
 ```
-template.typ    all branding: tokens, cover, footer, heading/table/code styles
-main.typ        generic wrapper; driven by --input, never edit to write a doc
-build.sh        the build command
-justfile        convenience wrapper over build.sh
-content/        your .md documents (and their images)
-assets/fonts/   bundled fonts + OFL licences
-assets/         footer-mountains-{left,right}.png
-out/            generated PDFs (gitignored)
+build.sh          build a document from content/ into out/
+build-deck.sh     build a deck from a checkout
+render.sh         build a document living anywhere on disk
+render-deck.sh    build a deck living anywhere on disk
+install.sh        install this as a Claude Code plugin
+justfile          convenience wrapper over build.sh
+
+src/template.typ  all branding: tokens, cover, footer, heading/table/code styles
+src/main.typ      generic wrapper; driven by --input, never edit to write a doc
+src/slides.typ    the slide layout library
+src/slidegen.py   deck.md -> Typst
+src/md-advice.sh  advisory hints on the author's Markdown
+
+content/          your .md documents (and their images)
+decks/            your decks
+docs/FORMAT.md    the deck.md field reference
+assets/fonts/     bundled fonts + OFL licences
+assets/           brand artwork and marks
+dev/              test suite and type specimens
+out/              generated PDFs (gitignored)
 ```
+
+Typst paths inside `src/` are anchored at the project root (`/assets/...`), so
+the same file compiles from a checkout and from the temporary directory that
+`render.sh` and `render-deck.sh` build in.
 
 ---
 
@@ -342,7 +360,7 @@ out/            generated PDFs (gitignored)
 
 ## Licence
 
-The code in this repository (`template.typ`, `main.typ`, `build.sh`, the
+The code in this repository (`src/template.typ`, `src/main.typ`, `build.sh`, the
 `justfile`, and the example content) is licensed under the **Apache License
 2.0**. See [LICENSE](LICENSE) for the full text.
 
@@ -371,7 +389,7 @@ rather than only in a README note.
 so it is safe to shell out to from a service:
 
 ```bash
-typst compile main.typ out/doc.pdf \
+typst compile src/main.typ out/doc.pdf \
   --root . \
   --font-path assets/fonts \
   --ignore-system-fonts \

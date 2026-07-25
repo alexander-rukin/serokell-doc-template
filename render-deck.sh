@@ -44,7 +44,8 @@ mkdir -p "$(dirname "$OUT")"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-cp "$TEMPLATE_DIR/slides.typ" "$WORK/"
+mkdir -p "$WORK/src"
+cp "$TEMPLATE_DIR/src/slides.typ" "$WORK/src/"
 # Everything Typst reads through --root has to be inside the sandbox, so the
 # brand artwork is copied. Fonts are not: --font-path is free to point outside
 # it, and 6.5MB of typefaces per build is worth not copying.
@@ -84,10 +85,10 @@ while IFS= read -r ref; do
   put the file at $SRC_DIR/$ref, or leave the image off that slide for a placeholder"
   mkdir -p "$WORK/$(dirname "$ref")"
   cp "$SRC_DIR/$ref" "$WORK/$ref"
-done < <(python3 "$TEMPLATE_DIR/slidegen.py" --images "$SRC")
+done < <(python3 "$TEMPLATE_DIR/src/slidegen.py" --images "$SRC")
 
 # deck.md -> Typst (warnings about over-long text go to stderr and are real)
-python3 "$TEMPLATE_DIR/slidegen.py" "$SRC" > "$WORK/deck.typ"
+python3 "$TEMPLATE_DIR/src/slidegen.py" "$SRC" > "$WORK/src/deck.typ"
 
 # theme (light|dark) from the deck.md frontmatter, or override with THEME=dark
 theme="${THEME:-$(sed -n '/^---/,/^---/p' "$SRC" | grep -oiE '^theme:[[:space:]]*[a-z]+' | head -1 | grep -oiE '[a-z]+$' || true)}"
@@ -97,7 +98,7 @@ case "$theme" in
   *) echo "error: theme must be light or dark, got '$theme'" >&2; exit 1 ;;
 esac
 
-typst compile "$WORK/deck.typ" "$OUT" \
+typst compile "$WORK/src/deck.typ" "$OUT" \
   --root "$WORK" \
   --font-path "$TEMPLATE_DIR/assets/fonts" \
   --ignore-system-fonts \
@@ -107,7 +108,7 @@ typst compile "$WORK/deck.typ" "$OUT" \
 # so this catches the other failure: a layout that flowed onto a second page.
 slides=$(python3 - "$TEMPLATE_DIR" "$SRC" <<'SLIDECOUNT'
 import sys
-sys.path.insert(0, sys.argv[1])
+sys.path.insert(0, sys.argv[1] + "/src")
 import slidegen
 print(len(slidegen.split_slides(open(sys.argv[2], encoding="utf-8").read())[1]))
 SLIDECOUNT
