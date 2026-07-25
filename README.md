@@ -9,6 +9,20 @@ You write Markdown. You do not write, read, or edit any Typst.
 
 ## Quick start
 
+**With Claude Code** - one command. It installs the plugin, adds Typst if it is
+missing, and turns on automatic updates, so you stay on the current template:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/alexander-rukin/serokell-doc-template/main/install.sh | bash
+```
+
+Then just ask for what you want: "make a PDF of this proposal". Exactly what the
+script touches is spelled out under [the Claude Code plugin](#the-claude-code-plugin),
+together with the manual `/plugin` route if you would rather not pipe a script
+into your shell.
+
+**Without Claude Code** - clone and build:
+
 ```bash
 # 1. Install Typst
 brew install typst          # macOS
@@ -27,9 +41,6 @@ The **first** build downloads the pinned `cmarker` package
 needs network access once. Every build after that is fully offline - fonts and
 artwork are committed to the repo, and nothing is read from your system font
 directory.
-
-If you use Claude Code, you do not have to clone anything - see
-[the Claude Code plugin](#the-claude-code-plugin).
 
 ---
 
