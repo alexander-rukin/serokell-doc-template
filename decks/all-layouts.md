@@ -3,230 +3,234 @@ theme: light
 ---
 
 @cover
-# Каждая раскладка деки
-subtitle: Тестовая дека - по одному слайду на тег
+# Every deck layout
+subtitle: A test deck - one slide per tag
 meta: Serokell · 2026
 
 @agenda
-# Содержание
-- Открывающие слайды
-- Текст и списки
-- Цифры
-- Диаграммы
-- Люди и визуалы
+# Contents
+- Opening slides
+- Text and lists
+- Numbers
+- Diagrams
+- People and visuals
 
 @section
-# Открывающие
+# Opening
 
 @statement
-# Одна крупная мысль на весь слайд
-sub: И пояснение под ней, если нужно
+# One large idea, the whole slide
+sub: And a line of explanation beneath it, if it needs one
 
 @callout
-# Важная выноска с красной полосой слева
-sub: Поддерживающая строка
+# An important callout with a red rule down the left
+sub: A supporting line
 
 @quote
-# Мы выбрали Haskell не из любви к теории, а потому что цена ошибки в проде выше
-who: Технический директор
+# We chose Haskell not out of love for theory, but because the cost of a mistake in production is higher
+who: CTO
 
 @highlight
-# Метка слева
-Абзац-пояснение справа. Много воздуха, одна мысль, никаких списков.
+# Label
+A paragraph of explanation on the right. Plenty of air, one idea, no lists.
 
 @section
-# Текст и списки
+# Text and lists
 
 @bullets
-# Заголовок списка
-lead: Пояснение под заголовком
-- Первый пункт | Короткое пояснение к нему
-- Второй пункт | И к нему тоже
-- Третий пункт | Ещё строка
+# A list heading
+lead: An explanation under the heading
+- First point | A short note about it
+- Second point | And one about this too
+- Third point | One more line
 
 @two-col
-# Две колонки
-- Слева | Первый поток мысли, пара строк текста для проверки переносов.
-- Справа | Второй поток мысли, параллельный первому.
+# Two columns
+- Left | The first line of thought, a couple of lines to check how it wraps.
+- Right | A second line of thought, running parallel to the first.
 
 @columns
-# Открытые колонки
-lead: Без карточек, прямо на странице
-- Аудит | Проверяем код и находим уязвимости
-- Разработка | Пишем на Haskell, Rust и Nix
-- Поддержка | Ведём систему после запуска
+# Open columns
+lead: No cards, straight onto the page
+- Audit | We read the code and find the vulnerabilities
+- Development | We build in Haskell, Rust and Nix
+- Support | We keep the system running after launch
 
 @cards
-# Карточки
-lead: Три карточки с заголовком и телом
-- Скорость | Первый прототип за две недели
-- Надёжность | Формальные методы там, где цена ошибки высока
-- Прозрачность | Отчёт после каждой итерации
+# Cards
+lead: Three cards, each a heading and a body
+- Speed | A first prototype in two weeks
+- Reliability | Formal methods where a mistake is expensive
+- Transparency | A report after every iteration
 
 @feature-grid
-# Сетка два на два
-lead: Четыре пункта в правой половине
-- Типизация | Ошибки ловятся на компиляции
-- Тесты | Property-based на критичных путях
-- Ревью | Каждый мердж смотрит второй инженер
-- Мониторинг | Метрики с первого дня
+# A two by two grid
+lead: Four points in the right half
+- Types | Errors are caught at compile time
+- Tests | Property-based on the critical paths
+- Review | A second engineer reads every merge
+- Monitoring | Metrics from day one
 
 @steps
-# Как мы работаем
-- Разбираем задачу и фиксируем критерии
-- Собираем прототип и проверяем гипотезу
-- Доводим до прода и передаём команде
+# How we work
+- We take the problem apart and agree on the criteria
+- We build a prototype and test the hypothesis
+- We take it to production and hand it to the team
 
 @compare
-# До и после
-- БЫЛО | Ручная сверка в трёх таблицах, два дня на отчёт
-- СТАЛО | Один пайплайн, отчёт за четыре минуты
+# Before and after
+- BEFORE | Reconciling three spreadsheets by hand, two days per report
+- AFTER | One pipeline, a report in four minutes
 
 @table
-# Сравнение подходов
-head: Подход | Скорость | Риск
-- Ручной | Низкая | Высокий
-- Скриптовый | Средняя | Средний
-- Типизированный | Высокая | Низкий
+# Comparing approaches
+head: Approach | Speed | Risk
+- Manual | Low | High
+- Scripted | Medium | Medium
+- Typed | High | Low
 
 @code
-# Пример кода
-caption: Сборка деки одной командой
+# A code example
+caption: Building a deck with one command
 ```sh
 ./build-deck.sh decks/my-deck.md
 ```
 
+@highlight
+# Cyrillic
+Кириллица набирается тем же шрифтом. Golos Text лежит в репозитории, поэтому текст выглядит одинаково на любой машине.
+
 @section
-# Цифры
+# Numbers
 
 @stat
 # 98%
-caption: покрытие критичных путей тестами
-sub: по данным за последний квартал
+caption: of critical paths covered by tests
+sub: measured over the last quarter
 
 @kpis
-# Итоги года
-- 12 | завершённых проектов
-- 98% | повторных обращений
-- 4 | новые команды
+# The year in numbers
+- 12 | projects delivered
+- 98% | of clients came back
+- 4 | new teams
 
 @metric-cols
-# Что это дало
-- 40% | Меньше времени на подготовку отчётов по каждому релизу
-- 3x | Быстрее вводим нового инженера в проект
-- 0 | Инцидентов на проде за полгода
+# What it bought us
+- 40% | Less time spent preparing a report for every release
+- 3x | Faster to bring a new engineer onto a project
+- 0 | Production incidents in six months
 
 @metric-grid
-# Метрики
-desc: Четыре показателя, за которыми мы следим каждую неделю
-- 40% | Время сборки
-- 12 | Релизов
-- 98% | Аптайм
-- 3 | Команды
+# Metrics
+desc: The four numbers we watch every week
+- 40% | Build time
+- 12 | Releases
+- 98% | Uptime
+- 3 | Teams
 
 @metric-list
-# Результаты
-lead: Три показателя с пояснением
-- 40% | Сборка | Время полной сборки проекта сократилось почти вдвое
-- 12 | Релизы | Выкатываем каждую неделю без ручных шагов
-- 98% | Аптайм | За вычетом планового обслуживания
+# Results
+lead: Three numbers, each with a note
+- 40% | Build | A full build of the project takes almost half the time
+- 12 | Releases | We ship every week with no manual steps
+- 98% | Uptime | Excluding scheduled maintenance
 
 @section
-# Диаграммы
+# Diagrams
 
 @timeline
-# Как идёт проект
-- Дискавери | Две недели на контекст и критерии
-- Прототип | Проверяем главную гипотезу
-- Прод | Выкатываем и передаём команде
+# How a project runs
+- Discovery | Two weeks on context and criteria
+- Prototype | We test the main hypothesis
+- Production | We ship it and hand it over
 
 @roadmap
-# Как мы пришли
-- 2019 | Первые проекты на Haskell
-- 2022 | Собрали практику формальной верификации
-- 2024 | Аудит смарт-контрактов как отдельное направление
-- 2026 | Своя дизайн-система и шаблоны
+# How we got here
+- 2019 | First projects in Haskell
+- 2022 | Built up a formal verification practice
+- 2024 | Smart contract audits as a line of work
+- 2026 | Our own design system and templates
 
 @matrix
-# Где мы играем
-desc: Позиционирование по цене и сложности задач
-x: Дёшево | Дорого
-y: Просто | Сложно
-- Массовый рынок
-- Ниша с высокой ценой ошибки
-- Автоматизация
-- Наш сегмент
+# Where we play
+desc: Positioned by price and by how hard the work is
+x: Cheap | Expensive
+y: Simple | Hard
+- Mass market
+- A niche where mistakes are expensive
+- Automation
+- Our segment
 
 @venn
-# Пересечение
-desc: Мы работаем там, где сходятся инженерия и предметная область
-- Инженерия
-- Мы
-- Домен
+# The overlap
+desc: We work where engineering meets the domain
+- Engineering
+- Us
+- Domain
 
 @nested
-# Слои системы
-desc: От ядра к обвязке
-- Ядро
-- Сервисы
-- Интерфейсы
+# Layers of the system
+desc: From the core outwards
+- Core
+- Services
+- Interfaces
 
 @funnel
-# Воронка
-desc: Как заявка превращается в проект
-- Первый контакт
-- Дискавери
-- Оценка
-- Контракт
+# The funnel
+desc: How an enquiry becomes a project
+- First contact
+- Discovery
+- Estimate
+- Contract
 
 @section
-# Люди и визуалы
+# People and visuals
 
 @testimonial
-# Команда закрыла за квартал то, что мы не могли сдвинуть год
+# In one quarter the team closed what we had failed to move for a year
 name: Product Lead
-loc: Берлин
+loc: Berlin
 
 @testimonials
-- Разобрались в нашем легаси быстрее, чем мы ожидали | Мария · CTO
-- Единственные, кто честно сказал, что делать не надо | Пётр · Founder
-- Отчёт понятен и инженерам, и совету директоров | Анна · COO
+- They understood our legacy faster than we expected | Maria · CTO
+- The only ones who told us honestly what not to build | Peter · Founder
+- A report that both the engineers and the board could read | Anna · COO
 
 @team
-# Кто работает над проектом
-- Мария | Тимлид
-- Пётр | Инженер
-- Анна | Аналитик
-- Иван | Дизайнер
+# Who works on the project
+- Maria | Team lead
+- Peter | Engineer
+- Anna | Analyst
+- Ivan | Designer
 
 @split image=assets/sample-photo.jpg
-# Текст и визуал
-Слева текст, справа картинка. Если картинки нет, встанет серая заглушка того же размера.
+# Text and a visual
+Text on the left, an image on the right. With no image, a grey placeholder of the same size takes its place.
 
 @image-row
-# Три визуала
-- assets/sample-photo.jpg | Первый | Короткая подпись под изображением
--  | Второй | Пустой путь даёт серую заглушку
-- assets/sample-photo.jpg | Третий | И ещё одна подпись
+# Three visuals
+- assets/sample-photo.jpg | First | A short caption under the image
+-  | Second | An empty path gives a grey placeholder
+- assets/sample-photo.jpg | Third | And one more caption
 
 @image-full
-# Одна картинка во всю ширину
+# One image, full width
 image: assets/sample-photo.jpg
-caption: Подпись под изображением
+caption: A caption under the image
 
 @mobile-showcase n=2
-# Мобильный интерфейс
-Текст слева, макеты телефонов справа. Количество телефонов задаётся опцией n.
+# A mobile interface
+Text on the left, phone mockups on the right. The number of phones is set with the n option.
 
 @desktop-showcase
-# Десктопный интерфейс
-Текст слева, макет ноутбука справа.
+# A desktop interface
+Text on the left, a laptop mockup on the right.
 
 @annotated
-# Разбор экрана
-- left | 50 | Первый элемент
-- right | 70 | Второй элемент
+# Walking through a screen
+- left | 50 | The first element
+- right | 70 | The second element
 
 @closing
-# Спасибо
+# Thank you
 sub: Serokell · 2026

@@ -137,8 +137,8 @@
 // ---- the fixed hierarchy (see typescale specimen) - one role per job ---------
 // Three roles share the 15pt step but separate by WEIGHT so no two thin levels
 // ever sit together:
-//  lbl  - H3 Лейбл  15 Bold   : card / column label, pairs with Body below it.
-//  subh - Подзаголовок 15 Medium : the ONE explanatory line under H1/H2. Medium,
+//  lbl  - H3 Label 15 Bold   : card / column label, pairs with Body below it.
+//  subh - Subhead 15 Medium : the ONE explanatory line under H1/H2. Medium,
 //         not Regular, so it holds against Body's Regular.
 //  cap  - Caption 9.6 Regular muted : footnote, attribution, meta, axis label.
 #let lbl(body, fill: card-ink) = text(font: font-heading, size: fs-item,
@@ -149,8 +149,7 @@
 //  note - Body 12 Regular muted : an explanatory SENTENCE attached to content
 //         (a code caption, a roadmap stage). Caption size is for things that are
 //         not sentences - meta, attribution, a role, an axis label. A sentence
-//         that carries meaning is body size, just quieter ("текст
-//         внизу слишком мелкий").
+//         that carries meaning is body size, just quieter.
 #let note(body) = text(font: font-body, size: fs-desc, fill: ink-soft, body)
 
 // ---- brand accents (the ONE colour we add: red #D92B04) ---------------------
@@ -189,7 +188,7 @@
   set text(font: font-body, fill: ink, size: fs-desc)
   // leading = within-paragraph line gap; spacing = BETWEEN paragraphs. In Typst
   // 0.15 block(spacing) does NOT zero paragraph spacing - it defaults to ~1.2em,
-  // which is the "огромный отступ" between a heading and its sub-line. Zero it;
+  // which is the oversized gap between a heading and its sub-line. Zero it;
   // every layout controls its own gaps with explicit v().
   set par(leading: 0.6em, spacing: 0pt)
   set block(spacing: 0pt)
@@ -240,7 +239,7 @@
 // Section divider (template slide 2): the section title alone as the hero on the
 // left band. Optional kicker (eyebrow) above it. No section number, and NO accent
 // bar - the red bar is reserved for the COVER only, so it reads as "the deck
-// starts here", not a repeating mark ("полоску только на обложке").
+// starts here", not a repeating mark: the bar belongs on the cover only.
 #let section(title, kicker: none, tag: none) = slide-raw(tag: tag, {
   vblock(bigw, {
     if kicker != none { kick(kicker); v(gap-label-tight) }
@@ -266,7 +265,7 @@
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
     // lead is the subhead under H2 (15 Medium), so it is NOT smaller than the
-    // items on the right (подзаголовок was 12, items were 15).
+    // items on the right (the subhead was 12, the items were 15).
     if lead != none { v(gap-head-body); subh(lead) }
   }))
   // Each item is EITHER a bare line (str) OR a (heading, text) mini-block that
@@ -276,7 +275,7 @@
     for (i, it) in items.enumerate() {
       let block = type(it) == array
       // between blocks: clearly bigger than the heading->text gap inside a block,
-      // so each mini-card reads as one unit ("увеличь между абзацами").
+      // so each mini-card reads as one unit.
       if i > 0 { v(if block { 11mm } else { gap-item }) }
       if block {
         // EXACTLY the card's heading->text piece: lbl + gap-label-body + bd. Same
@@ -300,7 +299,7 @@
   // (columns, two-col, feature-grid, image-row, metric rows): gap-label-body,
   // the same gap the cards use. The old split (tight 2.4mm
   // in columns vs a doubled ~6.7mm here from an extra par-spacing) read as
-  // inconsistent "по какому признаку". No stray par-spacing.
+  // inconsistent with no discernible rule. No stray par-spacing.
   let col(x, pair) = at(x, Y2, colw, {
     lbl(pair.at(0), fill: ink)
     v(gap-label-body)
@@ -344,7 +343,7 @@
   vblock(bigw, {
     disp(fs-title, number)
     v(gap-hero-sub)
-    // subhead under a display hero: the single Подзаголовок role (15 Medium),
+    // subhead under a display hero: the single Subhead role (15 Medium),
     // same as statement's sub.
     subh(caption)
     if sub != none { v(gap-meta); cap(sub) }
@@ -357,7 +356,7 @@
     // closing period sits OUTSIDE the guillemets, the Russian norm;
     // pass `body` WITHOUT a trailing period.
     hd(fs-head, par(leading: lead-head)[«#body».])
-    // attribution is NOT tiny caption under an H2 - that is banned. It is a muted Подзаголовок (15 Medium).
+    // attribution is NOT a tiny caption under an H2 - that is banned. It is a muted Subhead (15 Medium).
     // gap is tied to fs-head (the quote's size), NOT gap-hero-sub (tied to the
     // bigger fs-title) - that read too wide here.
     if who != none {
@@ -457,7 +456,7 @@
   let cy = 71.4         // mm (vertical middle of the frame)
   // arm length keeps every axis LABEL inside the 16.9mm frame: with 58 the top
   // label sat in the top margin, the bottom one collided with the footer and
-  // "Дорого" ran past the right margin. 46 still clears the bubbles (offset 30
+  // a one-word label ran past the right margin. 46 still clears the bubbles (offset 30
   // + r15 = 45).
   let ax = 46.0         // half-length of each axis arm, mm
   let d  = 30.0         // bubble diameter, mm
@@ -485,7 +484,7 @@
 })
 
 // Agenda / contents - a numbered list of the deck's sections. The number carries
-// the brand red (the ONE accent on the slide); the section name is a Подзаголовок.
+// the brand red (the ONE accent on the slide); the section name is a Subhead.
 #let agenda(title, items, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, hd(fs-head, title))
   at(16.9, Y2, 180, {
@@ -500,7 +499,7 @@
 })
 
 // KPI row - several big figures in a line (unlike `stat`, which is ONE). Each is
-// a number (H1 display) with a Подзаголовок label; the pair is tight (one metric).
+// a number (H1 display) with a Subhead label; the pair is tight (one metric).
 #let kpis(title, items, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, hd(fs-head, title))
   let n = items.len()
@@ -558,7 +557,7 @@
 
 // Callout - a pulled-out remark with the brand red rule down its left edge, set
 // large (H2). The heavier sibling of `noted`: for a single important line, not a
-// footnote. Optional supporting Подзаголовок under it.
+// footnote. Optional supporting Subhead under it.
 #let callout(body, sub: none, tag: none) = slide-raw(tag: tag, {
   vblock(bigw, grid(
     columns: (3.5pt, auto), column-gutter: 9mm, align: (left, horizon),
@@ -642,8 +641,8 @@
 // Metric number size is UNIFIED: a single hero figure (stat, big-metric) is
 // fs-title (36.6); a GROUP of figures (kpis, metric-cols, metric-grid,
 // metric-list) is fs-lead2 (23.4) - smaller reads calmer in a row, and every
-// multi-metric slide now matches ("все должно быть
-// унифицировано", slide 22's smaller number read nicer). num->label gap is the
+// multi-metric slide now matches (every metric slide must be unified, and the
+// smaller number read better). num->label gap is the
 // same gap-label-body everywhere.
 
 // ---- Metric list (template slide 19): heading on the left band, a vertical

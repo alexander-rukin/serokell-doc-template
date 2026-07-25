@@ -165,6 +165,6 @@ fi
 
 say "Done. From any folder, ask for a document:"
 echo '  "make a PDF from proposal.md"'
-echo '  "нужно резюме, вот заметки: notes.txt"'
+echo '  "turn these notes into a candidate profile: notes.txt"'
 echo
 claude plugin list 2>/dev/null | grep -A1 "$PLUGIN" || true

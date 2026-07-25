@@ -5,28 +5,28 @@
 #import "../../slides.typ": *
 
 #slide-raw(tag: "weights", {
-  at(16.9, 16.9, 209.6, hd(fs-head, [Подзаголовок: два способа отличить от текста]))
+  at(16.9, 16.9, 209.6, hd(fs-head, [Subhead: two ways to separate it from body text]))
 
   // Variant A - Medium (3 weights)
   at(16.9, 46, 100, {
-    cap[ВАРИАНТ A - подзаголовок Medium]
+    cap[OPTION A - Medium subhead]
     v(6mm)
-    hd(fs-head, [Заголовок слайда])
+    hd(fs-head, [Slide heading])
     v(gap-head-body)
-    subh([Подзаголовок Medium - плотнее тела, полный чёрный.])
+    subh([Medium subhead - heavier than body, full black.])
     v(gap-head-body)
-    bd(fs-desc, [Основной текст идёт следом обычным начертанием. На экране три веса: Bold, Medium, Regular.])
+    bd(fs-desc, [Body text follows in the regular weight. Three weights on screen: Bold, Medium, Regular.])
   })
 
   // Variant B - Regular muted (2 weights)
   at(128.1, 46, 100, {
-    cap[ВАРИАНТ B - подзаголовок Regular muted]
+    cap[OPTION B - Regular muted subhead]
     v(6mm)
-    hd(fs-head, [Заголовок слайда])
+    hd(fs-head, [Slide heading])
     v(gap-head-body)
     text(font: font-body, size: fs-item, fill: ink-soft,
-      [Подзаголовок Regular, но приглушён цветом.])
+      [Regular subhead, separated by colour instead.])
     v(gap-head-body)
-    bd(fs-desc, [Основной текст идёт следом обычным начертанием. Весов два: Bold и Regular, подзаголовок отличает цвет.])
+    bd(fs-desc, [Body text follows in the regular weight. Two weights only: Bold and Regular, with colour separating the subhead.])
   })
 })

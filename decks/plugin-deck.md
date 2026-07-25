@@ -3,49 +3,49 @@ theme: light
 ---
 
 @cover
-# Как мы собрали плагин Markdown -> PDF
-subtitle: Один источник правды, брендовый документ каждый раз
-meta: Serokell · 23 июля 2026
+# How we built the Markdown to PDF plugin
+subtitle: One source of truth, a branded document every time
+meta: Serokell · 23 July 2026
 
 @statement
-# Без шаблона каждый документ форкает фирменный стиль.
-sub: Цвета плывут, заголовки пухнут, и никто не замечает, пока бренд не растворился.
+# Without a template, every document forks the brand.
+sub: Colours drift, headings swell, and nobody notices until the brand has dissolved.
 
 @bullets
-# Идея
-lead: Markdown на входе. Брендовый PDF на выходе.
-- Автор пишет чистый Markdown и не трогает вёрстку
-- Бренд накатывается за него, одинаково, каждый раз
-- Правка бренда - один файл, ревью один раз
+# The idea
+lead: Markdown in. A branded PDF out.
+- The author writes plain Markdown and never touches layout
+- The brand is applied for them, the same way, every time
+- Changing the brand is one file, reviewed once
 
 @cards
-# Три файла, у каждого одна роль
-lead: Разделение ответственности - весь фокус: автор навсегда вне кода вёрстки.
-- template.typ | Все токены, обложка, футер. Бренд живёт только здесь.
-- render / main | Общая обёртка: путь, фронтматтер, тело. Не редактируется под документ.
-- content/md | Территория автора. Чистый Markdown, ничего больше.
+# Three files, one role each
+lead: Separating those roles is the whole trick - it keeps the author out of layout code for good.
+- template.typ | Every token, the cover, the footer. The brand lives here and nowhere else.
+- render / main | The shared wrapper: path, frontmatter, body. Never edited per document.
+- content/md | The author's territory. Plain Markdown, nothing else.
 
 @bullets
-# Залочить дизайн, оставить одну ручку
-lead: Шаблон, разрешающий правки под документ, перестаёт быть шаблоном - каждый документ становится форком.
-- Репо отказывает в правках цвета, шрифтов, артворка и полей
-- Ровно одна настройка: ширина таблиц - auto или full
-- Список запретов записан в инструкции для ассистента
+# Lock the design, leave one knob
+lead: A template that allows per-document edits stops being a template - every document becomes a fork.
+- The repository refuses edits to colour, fonts, artwork and margins
+- Exactly one setting: table width, auto or full
+- The list of refusals is written into the assistant's instructions
 
 @bullets
-# Трудности были все тихие
-lead: Каждая компилировалась без ошибок и давала валидный PDF. Видны только в пикселях.
-- Show-rule, пересобирающий свой же элемент, рекурсит вечно - собери таблицу как grid
-- Обёртка raw в par молча удаляет код-блоки - используй content-блок
-- page(background) протекает на обложку - передай ей background none явно
-- Чистая компиляция не доказательство - растеризуй вывод и смотри
+# Every difficulty was a quiet one
+lead: Each compiled without error and produced a valid PDF. They were visible only in the pixels.
+- A show rule that rebuilds its own element recurses forever - build the table as a grid
+- Wrapping raw in par silently drops code blocks - use a content block
+- page(background) leaks onto the cover - pass it background none explicitly
+- A clean compile proves nothing - rasterise the output and look at it
 
 @bullets
-# Один источник, тот же PDF, любая машина
-- Шрифты лежат в репо + флаг ignore-system-fonts - без тихих подмен
-- Google Sans Flex: одно семейство на оптический размер
-- Эмодзи через Noto Color Emoji - вектор, чёткий в печати, без пустых квадратов
+# One source, the same PDF, any machine
+- Fonts live in the repository, with ignore-system-fonts, so nothing is silently substituted
+- Google Sans Flex: one family per optical size
+- Emoji through Noto Color Emoji - vector, sharp in print, no empty boxes
 
 @closing
-# Эта дека собрана тем же инструментом, что описывает.
-sub: Те же токены, шрифты и горы. Самый убедительный пример вывода - сам вывод.
+# This deck was built with the tool it describes.
+sub: The same tokens, fonts and mountains. The most convincing sample of the output is the output.
