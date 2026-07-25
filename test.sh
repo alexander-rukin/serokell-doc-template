@@ -257,6 +257,23 @@ else
   bad "missing image" "rc=$rc out=$(echo "$out" | tail -1)"
 fi
 
+head_ "Documents: both ways markdown names an image"
+mkdir -p "$WORK/doc"
+cp assets/sample-photo.jpg "$WORK/doc/pic.jpg"
+printf '# Doc\n\n![alt][p]\n\nText.\n\n[p]: pic.jpg\n' > "$WORK/doc/ref.md"
+if ./render.sh "$WORK/doc/ref.md" "$WORK/ref.pdf" >/dev/null 2>&1 && [ -s "$WORK/ref.pdf" ]; then
+  ok "a reference-style ![alt][id] image is found"
+else
+  bad "reference-style image" "only inline ![](x) was collected"
+fi
+
+printf '# Doc\n\nText.\n\n```md\n![x](/etc/foo.png)\n```\n' > "$WORK/doc/fenced.md"
+if ./render.sh "$WORK/doc/fenced.md" "$WORK/fenced.pdf" >/dev/null 2>&1; then
+  ok "an image path inside a fenced example is not fetched"
+else
+  bad "fenced path in document" "a code sample aborted the build"
+fi
+
 head_ "A deck cannot write outside its own folder"
 # A deck.md is something colleagues send each other, so `cp` must not be
 # reachable with a path that climbs out of the build sandbox.
@@ -271,6 +288,70 @@ if [ $rc -ne 0 ] && echo "$out" | grep -q "must stay inside the deck"; then
   ok "an image path with '..' is refused"
 else
   bad "path traversal" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+printf '@statement\n# Schemes\nsub: repo at ssh://git.example.com/x.git today\n' > "$WORK/scheme.md"
+if ./render-deck.sh "$WORK/scheme.md" "$WORK/scheme.pdf" >/dev/null 2>&1; then
+  ok "a non-http scheme (ssh://) does not open a Typst comment"
+else
+  bad "scheme://" "the build died - only http/https are exempt from escaping"
+fi
+
+mkdir -p "$WORK/link-src"
+cp assets/sample-photo.jpg "$WORK/link-src/outside.jpg"
+mkdir -p "$WORK/linkdeck"
+ln -sfn "$WORK/link-src" "$WORK/linkdeck/out"
+printf '@split image=out/outside.jpg\n# T\nBody\n' > "$WORK/linkdeck/deck.md"
+out=$(./render-deck.sh "$WORK/linkdeck/deck.md" "$WORK/x.pdf" 2>&1); rc=$?
+if [ $rc -ne 0 ] && echo "$out" | grep -q "resolves outside the deck"; then
+  ok "an image reached through a symlink out of the folder is refused"
+else
+  bad "symlink escape" "rc=$rc out=$(echo "$out" | tail -1)"
+fi
+
+# ...and the same guard must not fire on a deck reached THROUGH a symlink, which
+# is every path under /tmp on macOS.
+mkdir -p "$WORK/real"
+cp assets/sample-photo.jpg "$WORK/real/pic.jpg"
+printf '@split image=pic.jpg\n# T\nBody\n' > "$WORK/real/deck.md"
+ln -sfn "$WORK/real" "$WORK/vialink"
+if ./render-deck.sh "$WORK/vialink/deck.md" "$WORK/vialink.pdf" >/dev/null 2>&1; then
+  ok "a deck behind a symlinked parent still builds"
+else
+  bad "symlinked parent" "the guard fired on a legitimate path"
+fi
+
+head_ "install.sh against a throwaway HOME"
+mkdir -p "$WORK/home/.claude" "$WORK/bin"
+cat > "$WORK/bin/claude" <<'FAKE'
+#!/usr/bin/env bash
+case "$*" in
+  "plugin marketplace list") printf '  serokell-docs\n' ;;
+  "plugin list") echo "serokell-docs@serokell-docs" ;;
+esac
+exit 0
+FAKE
+chmod +x "$WORK/bin/claude"
+printf '{"model":"opus"}\n' > "$WORK/home/.claude/settings.json"
+if HOME="$WORK/home" PATH="$WORK/bin:$PATH" SKIP_TYPST=1 bash install.sh >"$WORK/inst.log" 2>&1 \
+   && python3 -c "
+import json, sys
+d = json.load(open('$WORK/home/.claude/settings.json'))
+sys.exit(0 if d['extraKnownMarketplaces']['serokell-docs']['autoUpdate'] is True
+              and d.get('model') == 'opus' else 1)"; then
+  ok "it enables autoUpdate and keeps the existing settings"
+else
+  bad "install.sh" "$(tail -2 "$WORK/inst.log")"
+fi
+
+printf '[]\n' > "$WORK/home/.claude/settings.json"
+rm -f "$WORK/home/.claude/settings.json.bak"
+if HOME="$WORK/home" PATH="$WORK/bin:$PATH" SKIP_TYPST=1 bash install.sh >"$WORK/inst2.log" 2>&1 \
+   && grep -q "not a JSON object" "$WORK/inst2.log" \
+   && [ ! -e "$WORK/home/.claude/settings.json.bak" ]; then
+  ok "settings that are not an object are left alone, without a stray backup"
+else
+  bad "install.sh non-object settings" "$(tail -2 "$WORK/inst2.log")"
 fi
 
 # ------------------------------------------- read-only install compatibility

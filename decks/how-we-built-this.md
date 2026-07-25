@@ -84,7 +84,7 @@ lead: The seams are what keep the brand in one place
 # Where it stands
 - 37 | slide layouts
 - 3 | skills in one plugin
-- 27 | tests on every change
+- 34 | tests on every change
 
 @section
 # How to use it

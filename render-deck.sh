@@ -51,11 +51,18 @@ cp "$TEMPLATE_DIR/slides.typ" "$WORK/"
 mkdir -p "$WORK/assets"
 find "$TEMPLATE_DIR/assets" -maxdepth 1 -type f -exec cp {} "$WORK/assets/" \;
 
-# Copy across every local image the deck points at, keeping the relative path so
-# `image=diagrams/x.png` still resolves inside the sandbox root.
+# The images to bring into the sandbox come from the generator, not from a grep
+# over deck.md. Grepping matched anything that merely LOOKED like a filename -
+# a shell command inside a ```-fence, a path named in a sentence - and then died
+# on it; and it missed real ones whose names hold spaces, capitals or Cyrillic.
+# The generator knows which strings it actually passed to a layout.
+SRC_REAL="$(cd "$SRC_DIR" && pwd -P)"
 while IFS= read -r ref; do
+  [ -n "$ref" ] || continue
+  # already in the sandbox: a template asset such as assets/sample-photo.jpg
+  [ -f "$WORK/$ref" ] && continue
   case "$ref" in
-    http://*|https://*|"") continue ;;
+    http://*|https://*) continue ;;
     # Anything that could resolve outside the sandbox root. An absolute path is
     # obvious; `../` is not, and without this a deck handed to you by someone
     # else could write through `cp` to any path you can write - the sandbox is
@@ -63,33 +70,24 @@ while IFS= read -r ref; do
     /*)   die "image path must stay inside the deck's folder: $ref" ;;
     ..*|*/..*) die "image path must stay inside the deck's folder: $ref" ;;
   esac
-  # A symlink (or a symlinked folder) next to the deck can still point anywhere;
-  # resolve before copying so what lands in the PDF is a file from the deck's own
-  # folder and not, say, something out of a home directory.
+  # A symlink next to the deck can still point anywhere, so resolve before
+  # copying. Both sides are compared physically (`pwd -P`, `readlink -f`), or a
+  # deck reached through a symlinked parent - every path under /tmp on macOS -
+  # would look like an escape.
   real="$(cd "$SRC_DIR" 2>/dev/null && readlink -f "$ref" 2>/dev/null || true)"
   case "$real" in
-    "$SRC_DIR"/*) ;;
-    "") ;;                       # does not resolve - handled as missing below
+    "$SRC_REAL"/*) ;;
+    "") ;;                       # does not resolve - reported as missing below
     *) die "image resolves outside the deck's folder: $ref -> $real" ;;
   esac
-  if [ -f "$SRC_DIR/$ref" ]; then
-    mkdir -p "$WORK/$(dirname "$ref")"
-    cp "$SRC_DIR/$ref" "$WORK/$ref"
-  fi
-done < <(grep -ohE '[A-Za-z0-9_./-]+\.(png|jpg|jpeg|svg|webp|gif)' "$SRC" 2>/dev/null | sort -u || true)
+  [ -f "$SRC_DIR/$ref" ] || die "image not found next to the deck: $ref
+  put the file at $SRC_DIR/$ref, or leave the image off that slide for a placeholder"
+  mkdir -p "$WORK/$(dirname "$ref")"
+  cp "$SRC_DIR/$ref" "$WORK/$ref"
+done < <(python3 "$TEMPLATE_DIR/slidegen.py" --images "$SRC")
 
 # deck.md -> Typst (warnings about over-long text go to stderr and are real)
 python3 "$TEMPLATE_DIR/slidegen.py" "$SRC" > "$WORK/deck.typ"
-
-# Check the images the generator actually emitted. Asking slidegen (--images)
-# rather than grepping the generated file is the point: only the generator knows
-# which paths are arguments and which are sample text inside a code fence, and
-# some layouts pass their paths positionally with no `img:` key to grep for.
-while IFS= read -r want; do
-  [ -n "$want" ] || continue
-  [ -f "$WORK/$want" ] || die "image not found next to the deck: $want
-  put the file at $SRC_DIR/$want, or leave the image off that slide for a placeholder"
-done < <(python3 "$TEMPLATE_DIR/slidegen.py" --images "$SRC" 2>/dev/null)
 
 # theme (light|dark) from the deck.md frontmatter, or override with THEME=dark
 theme="${THEME:-$(sed -n '/^---/,/^---/p' "$SRC" | grep -oiE '^theme:[[:space:]]*[a-z]+' | head -1 | grep -oiE '[a-z]+$' || true)}"

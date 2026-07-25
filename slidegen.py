@@ -68,10 +68,11 @@ def esc(s):
         s = s.replace(ch, "\\" + ch)
     # `//` starts a Typst line comment, which would swallow the rest of the
     # generated line including its closing bracket - the author would get
-    # "unclosed delimiter" pointing at a temp file. `://` is exempt: Typst does
-    # not treat it as a comment, and escaping it strips the link annotation, so
-    # every URL on the slide would stop being clickable in the PDF.
-    s = re.sub(r"(?<!:)//", r"\\/\\/", s)
+    # "unclosed delimiter" pointing at a temp file. Exactly two prefixes are
+    # exempt, because Typst auto-links exactly two: http:// and https://, where
+    # escaping would cost the PDF's link annotation. Every other scheme -
+    # ssh://, ftp://, postgres:// - IS read as a comment and must be escaped.
+    s = re.sub(r"(?<!https:)(?<!http:)//", r"\\/\\/", s)
     return s
 
 

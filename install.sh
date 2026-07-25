@@ -88,7 +88,7 @@ say "Registering the marketplace..."
 # `</dev/null` on every claude call: under `curl ... | bash` stdin IS the rest of
 # this script, so a subcommand that ever prompts would swallow the remaining
 # steps and they would silently never run.
-if claude plugin marketplace list </dev/null 2>/dev/null | grep -qw "$MARKET"; then
+if claude plugin marketplace list </dev/null 2>/dev/null | grep -qE "(^|[[:space:]])[^[:alnum:]]?[[:space:]]*${MARKET}([[:space:]]|$)"; then
   claude plugin marketplace update "$MARKET" </dev/null >/dev/null 2>&1 || true
   echo "  already registered, refreshed it"
 else
@@ -136,16 +136,17 @@ except json.JSONDecodeError:
     print(f'  add "autoUpdate": true under extraKnownMarketplaces.{market} yourself.')
     raise SystemExit(0)
 
-# Back up before touching anything the user owns - but only the first time, or a
-# second run would overwrite the pre-install original with our own output.
-backup = settings + ".bak"
-if os.path.exists(settings) and not os.path.exists(backup):
-    shutil.copy(settings, backup)
-
 if not isinstance(data, dict):
     print(f"  skipped: {settings} is not a JSON object, leaving it alone.")
     print(f'  add "autoUpdate": true under extraKnownMarketplaces.{market} yourself.')
     raise SystemExit(0)
+
+# Back up before touching anything the user owns - after the checks above, so a
+# file we decided to leave alone does not get a .bak it never needed, and only
+# the first time, or a second run would overwrite the pre-install original.
+backup = settings + ".bak"
+if os.path.exists(settings) and not os.path.exists(backup):
+    shutil.copy(settings, backup)
 
 entry = data.setdefault("extraKnownMarketplaces", {}).setdefault(market, {})
 # Only fill in the source if it is missing; the CLI may have written its own

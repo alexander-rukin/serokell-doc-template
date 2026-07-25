@@ -50,6 +50,7 @@ trap 'rm -rf "$WORK"' EXIT
 cp "$TEMPLATE_DIR/template.typ" "$TEMPLATE_DIR/main.typ" "$WORK/"
 cp -R "$TEMPLATE_DIR/assets" "$WORK/assets"
 
+SRC_REAL="$(cd "$SRC_DIR" && pwd -P)"
 mkdir -p "$WORK/content"
 cp "$SRC" "$WORK/content/doc.md"
 
@@ -70,7 +71,7 @@ while IFS= read -r ref; do
   # folder and not, say, something out of a home directory.
   real="$(cd "$SRC_DIR" 2>/dev/null && readlink -f "$ref" 2>/dev/null || true)"
   case "$real" in
-    "$SRC_DIR"/*) ;;
+    "$SRC_REAL"/*) ;;
     "") ;;                       # does not resolve - handled as missing below
     *) die "image resolves outside the document's folder: $ref -> $real" ;;
   esac
@@ -83,8 +84,18 @@ while IFS= read -r ref; do
     die "image not found next to the document: $ref
   put the file at $SRC_DIR/$ref, or take the ![...](...) out of the markdown"
   fi
-done < <(grep -oE '!\[[^]]*\]\([^)]+\)' "$SRC" 2>/dev/null \
-           | sed -E 's/.*\(([^)]+)\).*/\1/' | sed -E 's/[[:space:]]+".*"$//' || true)
+done < <(
+  # Fenced code is stripped first: a markdown example inside ``` is text about
+  # images, not a request for one, and it used to abort the build on its guards.
+  # Both spellings CommonMark allows are collected - inline ![](x) and the
+  # reference form ![alt][id] with a [id]: x definition further down.
+  sed '/^[[:space:]]*```/,/^[[:space:]]*```/d' "$SRC" > "$WORK/nofence.md"
+  {
+    grep -oE '!\[[^]]*\]\([^)]+\)' "$WORK/nofence.md" 2>/dev/null \
+      | sed -E 's/.*\(([^)]+)\).*/\1/' | sed -E 's/[[:space:]]+".*"$//'
+    grep -oE '^[[:space:]]*\[[^]]+\]:[[:space:]]*[^[:space:]]+' "$WORK/nofence.md" 2>/dev/null \
+      | sed -E 's/.*\]:[[:space:]]*//'
+  } | sort -u || true)
 
 if [ -f "$WORK/assets/footer-mountains-left.png" ] \
    && [ -f "$WORK/assets/footer-mountains-right.png" ]; then

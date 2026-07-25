@@ -69,6 +69,17 @@ holding valid JSON that is not an object still ended in a traceback. An image
 that resolves through a symlink outside the source folder is refused as well:
 no write escaped, but a build should not read from elsewhere either.
 
+A third pass found what those fixes still left half-done, and the theme is that
+each lived in one half of a pair. The image *check* moved to the generator while
+the *copy* loop beside it still grepped the source, so a path merely mentioned
+in a code sample aborted the build and a filename with a space, a capital or
+Cyrillic was not found; both now take the generator's list. `render.sh` did not
+see reference-style images (`![alt][id]`) at all. Exempting `://` from escaping
+was too generous - Typst auto-links exactly `http` and `https`, so `ssh://` and
+every other scheme still opened a comment. The symlink guard compared a logical
+path against a physical one, which rejects any deck under `/tmp` on macOS. The
+suite is 34 checks and now runs `install.sh` itself against a throwaway HOME.
+
 Exploration files (nine background-artwork iterations, cover variants, a broken
 sample) left the repository root; the two type specimens moved to
 `dev/specimens/`. Assets now carry their provenance: `assets/CREDITS.md` records
