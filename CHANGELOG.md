@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.5.0
+
+**Slide decks, composed rather than marked up.** The repository already had a
+16:9 slide layout library; what it lacked was a way for anyone but its author to
+use it. `serokell-slides` is now a skill next to `serokell-pdf` and
+`serokell-cv`: you describe the deck and hand over your notes, the model splits
+them into slides, picks a layout for each one, and renders the PDF next to your
+file. You edit in words afterwards - "slide 3 as two columns", "drop slide 6" -
+and never open Typst.
+
+The authoring format (`deck.md`) now reaches the whole library. Its generator
+knew 13 layouts out of 45, so everything added recently - timelines, KPI rows,
+tables, matrices, funnels, team and testimonial slides, device mockups - was
+unreachable from markdown, and two tags called the library by signatures it no
+longer had. All 37 slide layouts are addressable, `decks/all-layouts.md` shows
+each one, and `FORMAT.md` documents the fields.
+
+`render-deck.sh` builds a deck living anywhere on disk, copying it and its
+images into a temp directory, so nothing is written inside the template - which
+is what a plugin installed read-only requires.
+
+**A slide with too much text is clipped, not reflowed.** The frame has a fixed
+height, so overflow is cut off at the edges rather than pushed to a second page,
+and no page count can detect it. The generator therefore carries a per-layout
+length budget and warns before the PDF exists. It also fixes a deck with no
+frontmatter failing to build at all, silently: with `pipefail`, a non-matching
+`grep` in the theme lookup aborted the script without printing anything.
+
 ## 0.4.0
 
 **The installer sets up Typst as well.** It used to print instructions and leave
