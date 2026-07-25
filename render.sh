@@ -85,11 +85,16 @@ while IFS= read -r ref; do
     die "image not found next to the document: $ref
   put the file at $SRC_DIR/$ref, or take the ![...](...) out of the markdown"
   fi
+# Fenced code is stripped first: a markdown example inside a fence is text about
+# images, not a request for one, and it used to abort the build on its guards.
+# Both spellings CommonMark allows are collected: the inline form, and the
+# reference form with a definition further down.
+#
+# These comments stay OUT of the process substitution below. bash 3.2, which is
+# what macOS ships as /bin/bash, miscounts the parentheses in a comment inside
+# `< <( ... )` and dies with "bad substitution: no closing )", which took the
+# whole document and profile path down on a stock Mac.
 done < <(
-  # Fenced code is stripped first: a markdown example inside ``` is text about
-  # images, not a request for one, and it used to abort the build on its guards.
-  # Both spellings CommonMark allows are collected - inline ![](x) and the
-  # reference form ![alt][id] with a [id]: x definition further down.
   sed '/^[[:space:]]*```/,/^[[:space:]]*```/d' "$SRC" > "$WORK/nofence.md"
   {
     grep -oE '!\[[^]]*\]\([^)]+\)' "$WORK/nofence.md" 2>/dev/null \
