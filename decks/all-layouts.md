@@ -5,7 +5,7 @@ theme: light
 @cover
 # Каждая раскладка деки
 subtitle: Тестовая дека - по одному слайду на тег
-meta: Serokell . 2026
+meta: Serokell · 2026
 
 @agenda
 # Содержание
@@ -229,4 +229,4 @@ caption: Подпись под изображением
 
 @closing
 # Спасибо
-sub: Serokell . 2026
+sub: Serokell · 2026

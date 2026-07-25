@@ -22,7 +22,7 @@ theme: light             # light (default) or dark
 @cover                   # every slide starts with @<layout> [key=value ...]
 # Big title              #  '# text'  -> the slide's headline / big line
 subtitle: One-liner      #  'key: value'  -> a named field
-meta: Serokell . 2026
+meta: Serokell · 2026
 
 @bullets
 # Heading

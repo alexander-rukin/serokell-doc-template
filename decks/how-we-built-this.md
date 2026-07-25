@@ -5,7 +5,7 @@ theme: light
 @cover
 # How we built this repository
 subtitle: The problem, the decisions behind the fix, and how to use the result
-meta: Serokell . July 2026
+meta: Serokell · July 2026
 
 @agenda
 # What this covers
@@ -171,4 +171,4 @@ lead: Nothing here blocks daily use
 
 @closing
 # The brand is a dependency, not a chore
-sub: Serokell . July 2026
+sub: Serokell · July 2026

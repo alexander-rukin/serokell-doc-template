@@ -146,6 +146,12 @@
 #let subh(body, fill: ink) = text(font: font-body, size: fs-item,
   weight: "medium", fill: fill, body)
 #let cap(body) = text(font: font-body, size: fs-small, fill: ink-soft, body)
+//  note - Body 12 Regular muted : an explanatory SENTENCE attached to content
+//         (a code caption, a roadmap stage). Caption size is for things that are
+//         not sentences - meta, attribution, a role, an axis label. A sentence
+//         that carries meaning is body size, just quieter (Sasha 25.07: "текст
+//         внизу слишком мелкий").
+#let note(body) = text(font: font-body, size: fs-desc, fill: ink-soft, body)
 
 // ---- brand accents (the ONE colour we add: red #D92B04) ---------------------
 // Deliberately sparse - one accent per slide, never more. Overuse kills it.
@@ -382,7 +388,7 @@
   at(16.9, Y2, CW / 1mm, {
     block(width: 100%, fill: code-bg, radius: card-r, inset: 12pt,
       text(font: font-mono, size: fs-code, fill: ink, code))
-    if caption != none { v(gap-head-body); cap(caption) }
+    if caption != none { v(gap-head-body); note(caption) }
   })
 })
 
@@ -736,11 +742,11 @@
     // block is bottom-anchored so its date ends `tick` above the spine.
     if up {
       place(bottom + left, dx: bx * 1mm - M, dy: -(Cb - (y - tick)) * 1mm,
-        box(width: bw * 1mm, { cap(ms.at(1)); v(2.4mm); lbl(ms.at(0), fill: ink) }))
+        box(width: bw * 1mm, { note(ms.at(1)); v(2.4mm); lbl(ms.at(0), fill: ink) }))
     } else {
       // sit the date right at the tick end so the line reads as attached, not
       // floating over empty air (Sasha 24.07 v24 slide 25).
-      at(bx, y + tick, bw, { lbl(ms.at(0), fill: ink); v(2.4mm); cap(ms.at(1)) })
+      at(bx, y + tick, bw, { lbl(ms.at(0), fill: ink); v(2.4mm); note(ms.at(1)) })
     }
   }
 })

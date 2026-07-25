@@ -5,7 +5,7 @@ theme: serokell
 @cover
 # Как мы собрали плагин Markdown -> PDF
 subtitle: Один источник правды, брендовый документ каждый раз
-meta: Serokell . 23 июля 2026
+meta: Serokell · 23 июля 2026
 
 @statement
 # Без шаблона каждый документ форкает фирменный стиль.
