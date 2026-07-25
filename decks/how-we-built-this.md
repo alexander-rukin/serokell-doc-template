@@ -4,111 +4,163 @@ theme: light
 
 @cover
 # How we built this repository
-subtitle: A house style that applies itself - documents, profiles and decks from plain markdown
+subtitle: The problem, the decisions behind the fix, and how to use the result
 meta: Serokell . July 2026
 
 @agenda
 # What this covers
-- The problem worth solving
-- What we built
-- How a deck gets made
-- What we learned building it
-- Where it goes next
+- The problem
+- How we got to the solution
+- What it is now
+- How to use it
+- What we learned
 
 @section
 # The problem
 
 @statement
 # Every document started from scratch
-sub: Fonts, margins and the logo were rebuilt by hand each time, and each time slightly differently
-
-@compare
-# The shape of the fix
-- BEFORE | Everyone reproduces the brand by hand, so no two documents match and nobody enjoys the work
-- AFTER | Everyone writes plain markdown, the brand is applied by the template, and the output is identical everywhere
-
-@highlight
-# One decision
-The design is not a set of suggestions to tune per document. It is decided once, locked in the template, and reused. Everything else about a document stays open.
-
-@section
-# What we built
-
-@columns
-# Three ways in, one house style
-lead: Same fonts, same artwork, same rules underneath
-- Documents | Proposals, reports and technical notes from a markdown file
-- Profiles | Candidate profiles in a fixed structure the client already expects
-- Decks | 16:9 presentations where a layout is chosen per slide
+sub: Fonts, margins, artwork and spacing were rebuilt by hand each time - and each time slightly differently
 
 @bullets
-# How it is put together
-lead: Four pieces, each replaceable
-- The template | The locked brand shell: fonts, colour, spacing, artwork
+# What that cost us
+lead: None of it was hard work, all of it was repeated work
+- Inconsistency | Two documents from the same week did not look like one company
+- Wasted hours | Reformatting is not design, but it takes the same afternoon
+- A blocked queue | Only the file owners could produce anything branded
+- Silent drift | Every copy of a template diverges the moment someone edits it
+
+@highlight
+# The real problem
+Not that documents looked wrong. That the brand lived in people's habits and in copies of files, instead of living in one place that applies itself.
+
+@section
+# How we got to the solution
+
+@steps
+# The path, in four moves
+- Lock the design once, in a template nobody edits per document
+- Let authors write plain markdown and nothing else
+- Discover that slides do not work that way at all
+- Hand the layout decision to the model, not the author
+
+@compare
+# First decision: who owns the design
+- CONSIDERED | Options per document - table width, spacing, a colour here and there. Flexible, and drifts within a week
+- CHOSEN | One locked shell. Content is yours, the design is not. A brand change is one file, not thirty documents
+
+@callout
+# Slides broke the assumption
+sub: In a document the layout is constant, so plain markdown carries everything. In a deck the layout IS the message - the same sentence set large, beside an image, or sliced into cards says three different things
+
+@compare
+# Second decision: who picks the layout
+- CONSIDERED | The author tags every slide by hand. Precise, and asks a writer to hold 37 layouts in their head
+- CHOSEN | The author brings text and intent, the model composes. Choosing a layout is design work
+
+@columns
+# Third decision: how it reaches people
+lead: Three ways in, one was clearly enough for now
+- A web service | Rejected for now: real work, for a company where everyone already has the tooling
+- A cloned repo | Works, but everyone maintains their own copy and its drift
+- A plugin | Chosen: one install, automatic updates, nothing to sync by hand
+
+@statement
+# The result of those three
+sub: A locked template, an author format that never mentions layout, and a model that composes decks on request
+
+@section
+# What it is now
+
+@bullets
+# Four pieces, each replaceable
+lead: The seams are what keep the brand in one place
+- The template | Fonts, colour, spacing, artwork - the locked shell
 - The library | 37 slide layouts, one function each
-- The generator | Turns author markdown into the layout calls
-- The skills | Let the model do the composing on request
+- The generator | Turns author markdown into layout calls, refuses what will not fit
+- The skills | Documents, candidate profiles and decks, composed on request
+
+@kpis
+# Where it stands
+- 37 | slide layouts
+- 3 | skills in one plugin
+- 16 | tests on every change
+
+@section
+# How to use it
 
 @code
-# Installing it takes one command
-caption: Registers the plugin, enables automatic updates, and installs Typst if it is missing
+# Install it once
+caption: Registers the plugin, turns on automatic updates, and installs Typst if it is missing
 ```sh
 curl -fsSL https://raw.githubusercontent.com/alexander-rukin/serokell-doc-template/main/install.sh | bash
 ```
 
-@section
-# How a deck gets made
+@bullets
+# Then ask, in your own words
+lead: In Claude Code, from whatever folder your notes are in
+- A document | "Make a PDF from proposal.md"
+- A profile | "Turn these notes into a candidate profile"
+- A deck | "A 15-minute client deck on our audit process - notes below"
 
 @steps
-# From notes to PDF
-- Describe the deck and hand over your notes
-- The model splits them into slides and picks a layout for each
+# What happens when you ask for a deck
+- It splits your material into slides and picks a layout for each
+- It writes a deck.md next to your notes
 - It renders the PDF and checks every page
-- You correct it in words and it rebuilds
+- It hands you the file and says what it did
 
 @code
-# You never write layout code
-caption: This is the source of slide 5 in this deck - a tag saying what the slide does, then what it says
+# What a slide looks like in the source
+caption: Readable and editable by hand - a tag saying what the slide does, then what it says
 ```md
 @compare
-# The shape of the fix
-- BEFORE | Everyone reproduces the brand by hand
-- AFTER | The template applies it, output identical
+# First decision: who owns the design
+- CONSIDERED | Options per document. Flexible, and drifts
+- CHOSEN | One locked shell. A brand change is one file
 ```
 
-@kpis
-# The system today
-- 37 | slide layouts
-- 3 | skills in one plugin
-- 14 | tests on every change
+@bullets
+# Correcting it is a conversation
+lead: You never open Typst, and rarely the markdown
+- Structure | "Slide 3 as two columns", "drop 6", "split that one"
+- Emphasis | "Make the number the whole slide", "this is the punchline"
+- Length | "Shorter", "one idea per slide here"
+- Look | "Dark theme" - both palettes come from the same file
 
-@callout
-# The layout carries the meaning
-sub: The same sentence set large, pinned beside an image, or sliced into cards is three different statements - so choosing the layout is the composing work, not a formatting afterthought
+@columns
+# Two things worth knowing
+lead: They come up on almost every deck
+- Images | Point at a file next to your deck; if it is not ready you get a grey panel the right size and the deck still builds
+- Warnings | "This layout holds about 420 characters" means text would be cut off - shorten it or split the slide
+
+@table
+# Where things live
+head: File | What it is
+- deck.md | Your deck: one tag plus text per slide
+- FORMAT.md | Every layout and its fields
+- decks/all-layouts.md | One slide per layout, rendered
+- slides.typ | The layout library and the locked brand
 
 @section
 # What we learned
 
 @cards
 # Three traps, already paid for
-- Silent clipping | Text past the frame is cut off, not reflowed - so length has to be checked before the PDF exists
-- A stale facade | The library grew to 45 layouts while the author format still knew 13
+- Silent clipping | Text past the frame is cut off, not reflowed - so length is checked before the PDF exists
+- A stale facade | The library grew to 45 layouts while the author format still reached 13
 - Read-only install | A plugin cannot write inside itself, so every build works in a temp directory
 
+@statement
+# Dogfooding found what tests did not
+sub: This deck is the first real use of the flow, and building it surfaced two bugs nobody had thought to test for
 
 @roadmap
 # How it grew
 - 20 July | Markdown to a branded PDF, design locked from day one
-- 23 July | Slides: a layout library and an authoring format
-- 24 July | Candidate profiles, one-command install, automatic updates
-- 25 July | Every layout reachable, a test suite, decks composed on request
-
-@statement
-# The test suite tests what fails quietly
-sub: Not that the build succeeds - that a layout is unreachable, that text is clipped, that a build wrote inside the repository
-
-@section
-# Where it goes next
+- 23 July | Slides: a layout library, then a format to author decks in
+- 24 July | Profiles, one-command install, automatic updates
+- 25 July | Every layout reachable, a test suite, decks as a skill
 
 @bullets
 # Open threads
