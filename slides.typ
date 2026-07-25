@@ -716,15 +716,19 @@
   let Cb = H / 1mm - M / 1mm   // content-area bottom in mm (for bottom placement)
   place(top + left, dx: 16.9mm - M, dy: y * 1mm - M,
     box(width: CW, height: 1.2pt, fill: ink))
+  let nr = 1.6          // node radius
   for (i, ms) in milestones.enumerate() {
     let cx = 16.9 + seg * (i + 0.5)
     let up = calc.rem(i, 2) == 0
     // node
-    place(top + left, dx: (cx - 1.6) * 1mm - M, dy: (y - 1.6) * 1mm - M,
-      box(width: 3.2mm, height: 3.2mm, radius: 50%, fill: accent))
-    // vertical tick from the spine toward the text
-    place(top + left, dx: cx * 1mm - M, dy: (if up { y - tick } else { y }) * 1mm - M,
-      box(width: 0.8pt, height: tick * 1mm, fill: ink))
+    place(top + left, dx: (cx - nr) * 1mm - M, dy: (y - nr) * 1mm - M,
+      box(width: 2 * nr * 1mm, height: 2 * nr * 1mm, radius: 50%, fill: accent))
+    // Vertical tick from the EDGE of the node toward the text, not from its
+    // centre: starting at the centre drew a dark line across the red disc
+    // (Sasha 25.07, "линии наезжают на круги").
+    place(top + left, dx: cx * 1mm - M,
+      dy: (if up { y - tick } else { y + nr }) * 1mm - M,
+      box(width: 0.8pt, height: (tick - nr) * 1mm, fill: ink))
     let bx = cx - seg / 2 + 2
     let bw = seg - 8
     // the DATE label is always `tick` mm from the spine (level across all
