@@ -49,7 +49,13 @@ typst compile \
   "$gen" "$out"
 
 # ---- verify: one page per slide ---------------------------------------------
-slides=$(grep -cE '^@[A-Za-z]' "$md" || true)
+slides=$(python3 - "$here" "$md" <<'SLIDECOUNT'
+import sys
+sys.path.insert(0, sys.argv[1])
+import slidegen
+print(len(slidegen.split_slides(open(sys.argv[2], encoding="utf-8").read())[1]))
+SLIDECOUNT
+)
 pages=$(python3 - "$out" <<'PY'
 import re, sys
 d = open(sys.argv[1], "rb").read()

@@ -90,7 +90,20 @@ def split_slides(text):
                 k, v = ln.split(":", 1)
                 fm[k.strip()] = v.strip()
         text = text[m.end():]
-    chunks = re.split(r"(?m)^@(?=[\w-])", text)
+    # Split on lines starting with @layout - but NOT inside a code fence, where
+    # `@compare` is sample text, not a new slide (a deck about this format shows
+    # its own source; without this guard the example silently became a slide).
+    chunks, cur, in_fence = [], [], False
+    for ln in text.splitlines():
+        if ln.strip().startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence and re.match(r"@[\w-]", ln):
+            chunks.append("\n".join(cur))
+            cur = []
+            ln = ln[1:]           # drop the leading @, as the old split did
+        cur.append(ln)
+    chunks.append("\n".join(cur))
+
     slides = []
     for ch in chunks:
         ch = ch.strip("\n")
@@ -106,6 +119,11 @@ def split_slides(text):
                 opts[k] = v.strip('"')
         slides.append((layout, opts, rest))
     return fm, slides
+
+
+# Options accepted on the `@layout ...` line. They cannot hold spaces - anything
+# wordier (a caption, a label) is a `key: value` line in the body instead.
+KNOWN_OPTS = {"image", "bleed", "n", "perrow", "avatars", "no"}
 
 
 def parse_block(rest):
@@ -600,6 +618,11 @@ def main():
     out = ['#import "slides.typ": *', ""]
     for n, (layout, opts, rest) in enumerate(slides, 1):
         f = parse_block(rest)
+        for k in opts:
+            if k not in KNOWN_OPTS:
+                print("warning: slide %d (@%s): unknown option %r on the @ line - it is "
+                      "ignored. Options cannot contain spaces; use a '%s: ...' line in "
+                      "the slide body instead." % (n, layout, k, k), file=sys.stderr)
         try:
             check_budget(n, layout, f)
             out.append(emit(layout, opts, f))

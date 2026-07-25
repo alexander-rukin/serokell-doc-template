@@ -77,7 +77,13 @@ typst compile "$WORK/deck.typ" "$OUT" \
 
 # One page per slide. A slide with too much text is CLIPPED rather than split,
 # so this catches the other failure: a layout that flowed onto a second page.
-slides=$(grep -cE '^@[A-Za-z]' "$SRC" || true)
+slides=$(python3 - "$TEMPLATE_DIR" "$SRC" <<'SLIDECOUNT'
+import sys
+sys.path.insert(0, sys.argv[1])
+import slidegen
+print(len(slidegen.split_slides(open(sys.argv[2], encoding="utf-8").read())[1]))
+SLIDECOUNT
+)
 pages=$(python3 - "$OUT" <<'PY'
 import re, sys
 d = open(sys.argv[1], "rb").read()

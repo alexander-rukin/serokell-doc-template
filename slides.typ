@@ -323,14 +323,14 @@
       box(width: W - 132mm, height: H, clip: true,
         fill: if img == none { card-bg } else { none },
         if img != none { image(img, width: 100%, height: 100%, fit: "cover") }
-        else { place(center + horizon, subh(if label != none { label } else { [визуал] }, fill: card-ink)) }))
+        else { place(center + horizon, subh(if label != none { label } else { [visual] }, fill: card-ink)) }))
   } else {
     place(top + left, dx: 128.1 * 1mm - M, dy: 16.9 * 1mm - M,
       box(width: 109mm, height: 109mm, radius: card-r, clip: true,
         fill: if img == none { card-bg } else { none },
         stroke: if img == none { card-stroke } else { none },
         if img != none { image(img, width: 100%, height: 100%, fit: "cover") }
-        else { place(center + horizon, subh(if label != none { label } else { [визуал] }, fill: card-ink)) }))
+        else { place(center + horizon, subh(if label != none { label } else { [visual] }, fill: card-ink)) }))
   }
 })
 
