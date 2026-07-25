@@ -16,16 +16,16 @@
 #let dark  = theme == "dark"
 
 // ---- tokens (template: pure black / white / grey) ---------------------------
-#let bg       = if dark { rgb("#141518") } else { white }
+#let bg       = if dark { rgb("#2A282E") } else { white }
 #let ink      = if dark { rgb("#F3F4F6") } else { rgb("#000000") }
 #let ink-soft = if dark { rgb("#9AA0A6") } else { rgb("#404040") }
 // soft, clean card: a very light fill with a hairline border, not a muddy
 // mid-grey, which read as dirty. The border keeps the near-white light card
 // legible against the white page.
-#let card-bg     = if dark { rgb("#212327") } else { rgb("#F1F1F3") }
-#let card-stroke = if dark { 0.75pt + rgb("#33353B") } else { 0.75pt + rgb("#E2E2E6") }
+#let card-bg     = if dark { rgb("#37363D") } else { rgb("#F1F1F3") }
+#let card-stroke = if dark { 0.75pt + rgb("#494851") } else { 0.75pt + rgb("#E2E2E6") }
 #let card-ink = if dark { rgb("#F3F4F6") } else { rgb("#000000") }
-#let code-bg  = if dark { rgb("#1E2024") } else { rgb("#F0F0F0") }
+#let code-bg  = if dark { rgb("#34333A") } else { rgb("#F0F0F0") }
 // brand shell that lives OUTSIDE the template grid (cover art + corner furniture)
 #let accent   = rgb("#D92B04")
 #let mark-img = if dark { "/assets/serokell-mark-light.svg" } else { "/assets/serokell-mark-dark.svg" }
