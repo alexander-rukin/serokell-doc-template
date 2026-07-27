@@ -89,7 +89,7 @@ Choose by what the slide is *doing*, not by what fits.
 | before and after | `@compare` |
 | structured facts to scan | `@table` |
 | one number that anchors everything | `@stat` |
-| several headline numbers | `@kpis`, `@metric-cols`, `@metric-grid`, `@metric-list` |
+| several headline numbers | `@metric-cols`, `@metric-grid`, `@metric-list` |
 | stages over time | `@timeline`, or `@roadmap` for dated history |
 | a positioning argument | `@matrix`, `@venn`, `@nested`, `@funnel` |
 | the people | `@team`, `@testimonials` |
@@ -108,7 +108,13 @@ Full field reference: `docs/FORMAT.md`. Every layout rendered, one slide each:
 - **Vary the rhythm.** Four `@bullets` in a row is a document, not a deck. Break
   text slides with a number, a quote, a diagram, a divider.
 - **Spend the accent sparingly.** The red is structural - it lands on section
-  numbers, nodes and rules by itself. Do not add more of it.
+  numbers, nodes and rules by itself. On top of that you may mark ONE span per
+  slide with `*asterisks*`, and only on slides that carry a point worth
+  spotlighting - a headline's operative word, the number on a `@stat`. Propose
+  the spans when you draft the deck and say which words you marked, so the
+  author can move them; they are plain text in the deck.md, not a hidden style.
+  A deck where most slides have a red word has no accent at all - if in doubt,
+  leave it out. The builder warns at two spans on one slide.
 - **Do not invent facts.** No made-up metrics, client names, or dates. If the
   brief has no number for a `@stat` slide, ask for one or use another layout.
 - **Placeholders are fine.** An image that does not exist yet renders as a grey

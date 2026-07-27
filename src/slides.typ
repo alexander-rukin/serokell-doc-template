@@ -22,10 +22,17 @@
 // soft, clean card: a very light fill with a hairline border, not a muddy
 // mid-grey, which read as dirty. The border keeps the near-white light card
 // legible against the white page.
-#let card-bg     = if dark { rgb("#37363D") } else { rgb("#F1F1F3") }
-#let card-stroke = if dark { 0.75pt + rgb("#494851") } else { 0.75pt + rgb("#E2E2E6") }
+// On light the card used to be #F1F1F3 with an #E2E2E6 hairline, which was
+// enough against a plain white page but not against the background range: a
+// mountain shoulder passing under a card edge left the two nearly the same
+// value and the card stopped being an object. Both are a couple of steps
+// darker now - still a light card, but it holds its own edge over the art.
+#let card-bg     = if dark { rgb("#37363D") } else { rgb("#EAEAEE") }
+#let card-stroke = if dark { 0.75pt + rgb("#494851") } else { 0.75pt + rgb("#D6D6DD") }
 #let card-ink = if dark { rgb("#F3F4F6") } else { rgb("#000000") }
-#let code-bg  = if dark { rgb("#34333A") } else { rgb("#F0F0F0") }
+// The code panel IS a card - same fill, same hairline, same radius. It carried
+// its own near-miss grey before, which read as a second kind of surface.
+#let code-bg  = card-bg
 // brand shell that lives OUTSIDE the template grid (cover art + corner furniture)
 #let accent   = rgb("#D92B04")
 #let mark-img = if dark { "/assets/serokell-mark-light.svg" } else { "/assets/serokell-mark-dark.svg" }
@@ -46,9 +53,9 @@
 // Modular scale: ONE ratio (1.25, major third) off a 12pt body. Every role is
 // base * 1.25^n, so steps relate cleanly instead of drifting per-role (sizes
 // felt random because the old ratio wandered between 1.20 and 1.60).
-#let fs-title = 36.6pt   // display hero   (step +5)  cover/section/statement/stat/closing
-#let fs-lead2 = 23.4pt   // metric number  (step +3)  step numbers, highlight
-#let fs-head  = 18.8pt   // working heading (step +2) content-slide heading, card statement
+#let fs-title = 45.8pt   // display hero   (step +6)  cover/section/statement/stat/closing
+#let fs-lead2 = 29.3pt   // metric number  (step +4)  step numbers, highlight
+#let fs-head  = 23.4pt   // working heading (step +3) content-slide heading, card statement
 #let fs-item  = 15pt     // subhead / label (step +1) subtitle, item, card label
 #let fs-desc  = 12pt     // body            (step  0)  description, running text
 #let fs-small = 9.6pt    // caption         (step -1)  caption, attribution, meta, axis
@@ -65,8 +72,8 @@
 // 5 and 6 had identical gaps under differently-sized headings).
 #let gap-hero-sub   = 0.65 * fs-title  // ~8.4mm  H1 display hero -> sub / attribution
                                        //         (cover, statement, stat, quote, closing)
-#let gap-head-body  = 1.05 * fs-head   // ~7.0mm  H2 heading -> body / subhead / lead
-                                       //         (bullets, split, matrix, cards lead, code)
+#let gap-head-body  = 1.05 * fs-head   // ~8.7mm  H2 heading -> BODY / list / lead text
+                                       //         (cards lead, code, figure captions)
 #let gap-label-body = 0.90 * fs-item   // ~4.8mm  H3 label -> its body INSIDE a card
                                        //         (card label; the frame lets it breathe)
 #let gap-label-tight = 0.45 * fs-item  // ~2.4mm  H3 label -> its body on the OPEN page
@@ -75,7 +82,7 @@
 #let gap-fig-label  = 0.75 * fs-lead2   // ~6.2mm  BIG figure -> its label/description;
                                        //         tied to the figure's own kegel, so a big
                                        //         number gets more air than a text label.
-                                       //         Same on EVERY metric slide (kpis, metric-cols,
+                                       //         Same on EVERY metric slide (metric-cols,
                                        //         metric-grid).
 #let gap-num-body   = 0.60 * fs-lead2  // ~5mm    step number -> step text
 #let gap-meta       = 0.90 * fs-item   // ~4.8mm  sub -> small muted meta line: meta
@@ -94,6 +101,27 @@
 #let lead-head = 0.5em     // fs-head bold blocks (quote, card statement)
 #let fs-code   = 11pt      // mono code on the code slide (denser than body)
 
+// ---- background art ---------------------------------------------------------
+// The brand range, washed out almost to nothing, under every slide except the
+// cover (which carries the same photograph at full strength). It is a veil in
+// the page colour laid over the picture rather than a real opacity: on light the
+// mountains bleach towards white, on dark they sink into the dark. The two
+// themes need different numbers - the snow is light, so on a dark page the same
+// value reads far stronger.
+//
+// `--input bgart=0.12` overrides it for a quick look; `bgart=0` turns the art
+// off entirely and the deck goes back to plain pages.
+#let bg-art-vis = float(sys.inputs.at("bgart",
+  default: if dark { "0.06" } else { "0.07" }))
+#let bg-art = if bg-art-vis > 0 {
+  place(top + left, dx: -M, dy: -M,
+    box(width: W, height: H, clip: true, {
+      image("/assets/brand-mountains.png", width: W, height: H, fit: "cover")
+      place(top + left, rect(width: W, height: H,
+        fill: bg.transparentize(bg-art-vis * 100%)))
+    }))
+}
+
 // ---- brand corner furniture (sits in the bottom margin, LOW - 9mm off edge) --
 // The template's content grid uses a 16.9mm margin, but our footer chrome lives
 // below that, close to the physical bottom edge like the doc template's footer.
@@ -103,9 +131,19 @@
 #let bar-h = 3pt
 #let accent-bar = box(width: bar-w, height: bar-h, fill: accent)
 #let logo-box = box(image(mark-img, height: 5mm))
-#let deck-num = context box(height: 5mm, align(horizon,
-  text(font: font-body, size: 10pt, weight: "medium", fill: ink,
-    str(counter(page).get().first()))))
+// Page number as "7 / 14": the position in full ink, the total muted. It answers
+// the one question the audience actually holds - how much is left - which is why
+// the deck carries no progress bar, section segments or dots (tried, dropped:
+// they answer "where are we in the structure", a question that only exists on a
+// long deck, and they cost attention on every slide).
+#let num-dim = if dark { rgb("#5A5A5E") } else { rgb("#B8B8BE") }
+#let deck-num = context box(height: 5mm, align(horizon, {
+  let here = counter(page).get().first()
+  let total = counter(page).final().first()
+  text(font: font-body, size: 10pt, weight: "medium", fill: ink, str(here))
+  text(font: font-body, size: 10pt, weight: "medium", fill: num-dim,
+    " / " + str(total))
+}))
 
 // ---- base text --------------------------------------------------------------
 #set text(font: font-body, size: fs-desc, fill: ink, lang: "ru")
@@ -143,6 +181,13 @@
 //  cap  - Caption 9.6 Regular muted : footnote, attribution, meta, axis label.
 #let lbl(body, fill: card-ink) = text(font: font-heading, size: fs-item,
   weight: "bold", fill: fill, body)
+// The subhead is a DISPLAY-scale companion: it only appears under the 45.8pt
+// hero (cover, section, statement) and in the agenda, where 12pt under that
+// type would fall off a cliff. Under a working H2 there is no subhead at all -
+// the line under a 23.4pt heading is body text, whatever it says. Sasha walked
+// the whole deck on 27.07 and every 15pt Medium line under an H2 read as heavy
+// body copy rather than as a level of its own; keeping the role there only gave
+// two ways to set the same thing.
 #let subh(body, fill: ink) = text(font: font-body, size: fs-item,
   weight: "medium", fill: fill, body)
 #let cap(body) = text(font: font-body, size: fs-small, fill: ink-soft, body)
@@ -183,7 +228,7 @@
 // the single page primitive. Content sits on the template's 16.9mm grid; the
 // brand footer (mark bottom-right + page number bottom-left) sits LOW in the
 // bottom margin. Cover passes foot:false (it carries its own white mark on art).
-#let slide-raw(body, tag: none, foot: true, num: true) = page(
+#let slide-raw(body, tag: none, foot: true, num: true, art: true) = page(
   width: W, height: H, margin: M, fill: bg, {
   set text(font: font-body, fill: ink, size: fs-desc)
   // leading = within-paragraph line gap; spacing = BETWEEN paragraphs. In Typst
@@ -192,6 +237,7 @@
   // every layout controls its own gaps with explicit v().
   set par(leading: 0.6em, spacing: 0pt)
   set block(spacing: 0pt)
+  if art { bg-art }
   body
   if foot {
     place(bottom + right, dy: FOOT_DROP, logo-box)
@@ -206,7 +252,7 @@
 // Cover - template title placement (left, y=59) PLUS our brand shell: the
 // mountain range band + a mirrored peak on the right + white Serokell mark +
 // the red accent tick. Mountains are part of the brand and stay.
-#let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(tag: tag, foot: false, {
+#let cover(title, subtitle: none, meta: none, tag: none) = slide-raw(tag: tag, foot: false, art: false, {
   // single full-width mountain footer (one cohesive band, fades into the white
   // page at the top; tall peak on the right). Replaces the band + mirrored peak.
   place(bottom + left, dx: -M, dy: M,
@@ -230,11 +276,21 @@
   })
 })
 
-// eyebrow / kicker - a small bold label that sits ABOVE a title (the template's
-// "Subtitle" over "Header" pattern). Same face/size as a card label (H3), full
-// ink, tight gap to the title below so the two read as one titled unit.
-#let kick(body, fill: ink) = text(font: font-heading, size: fs-item,
-  weight: "bold", fill: fill, body)
+// eyebrow / kicker - a small label that sits ABOVE a title (the template's
+// "Subtitle" over "Header" pattern).
+//
+// It used to be H3 in full ink: 15pt bold over an 18.8pt bold heading, which is
+// barely a step - the pair read as one heading broken across two lines instead
+// of "label, then title". The eyebrow now separates by three properties at once:
+// body size, regular weight, and brand red with a touch of tracking. Thin red
+// keeps it a service line at any heading size - over the 36.6pt display of a
+// section as well as over the 18.8pt heading of a split.
+//
+// On the red: the deck rule is one accent per slide. The eyebrow only appears
+// where the author asked for a kicker, so it stays rare - but do not put an
+// ac[] red word on a slide that already carries one.
+#let kick(body, fill: accent) = text(font: font-heading, size: fs-desc,
+  weight: "regular", fill: fill, tracking: 0.05em, body)
 
 // Section divider (template slide 2): the section title alone as the hero on the
 // left band. Optional kicker (eyebrow) above it. No section number, and NO accent
@@ -266,7 +322,7 @@
     hd(fs-head, title)
     // lead is the subhead under H2 (15 Medium), so it is NOT smaller than the
     // items on the right (the subhead was 12, the items were 15).
-    if lead != none { v(gap-head-body); subh(lead) }
+    if lead != none { v(gap-head-body); bd(fs-desc, lead) }
   }))
   // Each item is EITHER a bare line (str) OR a (heading, text) mini-block that
   // reads like the card slides - a bold label + a supporting line. Blocks get
@@ -317,8 +373,10 @@
     if kicker != none { kick(kicker); v(gap-label-tight) }
     hd(fs-head, title)
     v(gap-head-body)
-    set par(spacing: 0.9em)   // multi-paragraph body separates (global spacing is 0)
-    bd(fs-desc, body)
+    // The paragraph spacing belongs to the BODY, not to the gap above it: as a
+    // bare `set` it also landed between the heading and the first line, so this
+    // slide sat ~4mm lower than every other heading+text pair (Sasha, slide 36).
+    block({ set par(spacing: 0.9em); bd(fs-desc, body) })
   })
   if bleed {
     // edge-to-edge column on the right half: from the horizontal midway point to
@@ -356,12 +414,14 @@
     // closing period sits OUTSIDE the guillemets, the Russian norm;
     // pass `body` WITHOUT a trailing period.
     hd(fs-head, par(leading: lead-head)[«#body».])
-    // attribution is NOT a tiny caption under an H2 - that is banned. It is a muted Subhead (15 Medium).
-    // gap is tied to fs-head (the quote's size), NOT gap-hero-sub (tied to the
-    // bigger fs-title) - that read too wide here.
+    // The attribution is a service line, not a level of the hierarchy: body size,
+    // muted. It used to be a 15pt Medium subhead, which is the one thing that no
+    // longer exists under a working heading - and a name under a quote is not a
+    // subhead by role either. Not caption size either: at 9.6pt it disappears
+    // under type this big. Gap is tied to fs-head (the quote's own size).
     if who != none {
       v(gap-head-body)
-      text(font: font-body, size: fs-item, weight: "medium", fill: ink-soft, who)
+      note(who)
     }
   })
 })
@@ -383,7 +443,7 @@
   // caption flows right under the code block (fixed y left a dead hole between
   // a short snippet and a caption pinned to the page bottom).
   at(16.9, Y2, CW / 1mm, {
-    block(width: 100%, fill: code-bg, radius: card-r, inset: 12pt,
+    block(width: 100%, fill: code-bg, stroke: card-stroke, radius: card-r, inset: 12pt,
       text(font: font-mono, size: fs-code, fill: ink, code))
     if caption != none { v(gap-head-body); note(caption) }
   })
@@ -417,6 +477,9 @@
 #let cards(title, items, lead: none, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, {
     hd(fs-head, title)
+    // `lead` is the same role on every layout that has one: the single line that
+    // finishes the heading. It is a subhead here too - this slide was the only
+    // one rendering it as body, which made slides 11 and 12 disagree.
     if lead != none { v(gap-head-body); bd(fs-desc, lead) }
   })
   let n = items.len()
@@ -449,7 +512,7 @@
   vblock(colw, {
     hd(fs-head, title)
     v(gap-head-body)
-    subh(desc)
+    bd(fs-desc, desc)
   })
   // cross centre on the right half
   let cx = 176.0        // mm
@@ -500,19 +563,6 @@
 
 // KPI row - several big figures in a line (unlike `stat`, which is ONE). Each is
 // a number (H1 display) with a Subhead label; the pair is tight (one metric).
-#let kpis(title, items, tag: none) = slide-raw(tag: tag, {
-  at(16.9, 16.9, 209.6, hd(fs-head, title))
-  let n = items.len()
-  let w = (CW / 1mm - gut-card * (n - 1)) / n
-  for (i, it) in items.enumerate() {
-    at(16.9 + i * (w + gut-card), 62, w, {
-      disp(fs-lead2, it.at(0))
-      v(gap-fig-label)
-      subh(it.at(1))
-    })
-  }
-})
-
 // Timeline - a horizontal spine with a red node per stage; label AND description
 // both sit BELOW the node, stacked, so every stage reads the same distance from
 // its dot (no arbitrary above/below split).
@@ -564,7 +614,7 @@
     box(width: 3.5pt, height: 32mm, fill: accent),
     box(width: 178mm, {
       hd(fs-head, par(leading: lead-head, body))
-      if sub != none { v(gap-head-body); subh(sub) }
+      if sub != none { v(gap-head-body); bd(fs-desc, sub) }
     }),
   ))
 })
@@ -602,7 +652,7 @@
 #let columns(title, items, lead: none, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, {
     hd(fs-head, title)
-    if lead != none { v(gap-head-body); subh(lead) }
+    if lead != none { v(gap-head-body); bd(fs-desc, lead) }
   })
   let n = items.len()
   let g = 8
@@ -621,7 +671,7 @@
 #let feature-grid(title, items, lead: none, tag: none) = slide-raw(tag: tag, {
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
-    if lead != none { v(gap-head-body); subh(lead) }
+    if lead != none { v(gap-head-body); bd(fs-desc, lead) }
   }))
   let x0 = 128.1
   let cw = 49.5
@@ -639,7 +689,7 @@
 })
 
 // Metric number size is UNIFIED: a single hero figure (stat, big-metric) is
-// fs-title (36.6); a GROUP of figures (kpis, metric-cols, metric-grid,
+// fs-title (36.6); a GROUP of figures (metric-cols, metric-grid,
 // metric-list) is fs-lead2 (23.4) - smaller reads calmer in a row, and every
 // multi-metric slide now matches (every metric slide must be unified, and the
 // smaller number read better). num->label gap is the
@@ -650,7 +700,7 @@
 #let metric-list(title, items, lead: none, tag: none) = slide-raw(tag: tag, {
   place(horizon + left, dx: 16.9mm - M, box(width: 84mm, {
     hd(fs-head, title)
-    if lead != none { v(gap-head-body); subh(lead) }
+    if lead != none { v(gap-head-body); bd(fs-desc, lead) }
   }))
   let n = items.len()
   let top = 42
@@ -661,14 +711,19 @@
       disp(fs-lead2, it.at(0)),
       // description is body size, not a tiny caption - there is room and normal
       // text reads better here.
-      { lbl(it.at(1), fill: ink); v(2.4mm); bd(fs-desc, it.at(2)) },
+      // label -> its body is gap-label-body here too, like every other
+      // label+text pair in the deck; this row used to carry a hardcoded 2.4mm,
+      // which read tighter than the same pair on the grid slides.
+      { lbl(it.at(1), fill: ink); v(gap-label-body); bd(fs-desc, it.at(2)) },
     ))
   }
 })
 
 // ---- Metric columns (template slide 20): heading at the top, a row of figures
-// each with a full descriptive paragraph (heavier than `kpis`, which pairs a
-// number with a one-line label).
+// each with a full descriptive paragraph. This is the only figures-in-a-row
+// layout: `kpis` used to sit beside it with a one-line label instead of a
+// paragraph, which is the same slide with less on it, so it is gone and the tag
+// maps here.
 #let metric-cols(title, items, tag: none) = slide-raw(tag: tag, {
   at(16.9, 16.9, 209.6, hd(fs-head, title))
   let n = items.len()
@@ -689,7 +744,7 @@
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
     v(gap-head-body)
-    subh(desc)
+    bd(fs-desc, desc)
   }))
   let x0 = 128.1
   let cw = 52
@@ -701,7 +756,7 @@
     at(cx, cy, cw, {
       disp(fs-lead2, it.at(0))
       v(gap-fig-label)
-      subh(it.at(1))
+      bd(fs-desc, it.at(1))
     })
   }
 })
@@ -738,11 +793,11 @@
     // block is bottom-anchored so its date ends `tick` above the spine.
     if up {
       place(bottom + left, dx: bx * 1mm - M, dy: -(Cb - (y - tick)) * 1mm,
-        box(width: bw * 1mm, { note(ms.at(1)); v(2.4mm); lbl(ms.at(0), fill: ink) }))
+        box(width: bw * 1mm, { note(ms.at(1)); v(gap-label-body); lbl(ms.at(0), fill: ink) }))
     } else {
       // sit the date right at the tick end so the line reads as attached, not
       // floating over empty air.
-      at(bx, y + tick, bw, { lbl(ms.at(0), fill: ink); v(2.4mm); note(ms.at(1)) })
+      at(bx, y + tick, bw, { lbl(ms.at(0), fill: ink); v(gap-label-body); note(ms.at(1)) })
     }
   }
 })
@@ -753,7 +808,7 @@
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
     v(gap-head-body)
-    subh(desc)
+    bd(fs-desc, desc)
   }))
   let cy = 71.0
   let r = 34.0
@@ -774,7 +829,7 @@
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
     v(gap-head-body)
-    subh(desc)
+    bd(fs-desc, desc)
   }))
   let cx = 178.0
   let cy = 71.0
@@ -796,7 +851,7 @@
   place(horizon + left, dx: 16.9mm - M, box(width: colw * 1mm, {
     hd(fs-head, title)
     v(gap-head-body)
-    subh(desc)
+    bd(fs-desc, desc)
   }))
   let n = items.len()
   let cx = 176.0
@@ -948,7 +1003,7 @@
     if kicker != none { kick(kicker); v(gap-label-tight) }
     hd(fs-head, title)
     v(gap-head-body)
-    subh(body)
+    bd(fs-desc, body)
   }))
   // phones shrink as their count grows so the whole row stays inside the right
   // half of the frame (three full-size phones ran off the page edge).
@@ -971,7 +1026,7 @@
     if kicker != none { kick(kicker); v(gap-label-tight) }
     hd(fs-head, title)
     v(gap-head-body)
-    subh(body)
+    bd(fs-desc, body)
   }))
   let lw = 118
   place(horizon + left, dx: (172 - lw / 2) * 1mm - M, box(laptop(lw)))
@@ -982,10 +1037,17 @@
 // y is the mm height of the anchor point on the device edge.
 #let annotated(title: none, img: none, notes: (), tag: none) = slide-raw(tag: tag, {
   if title != none { at(16.9, 16.9, 209.6, hd(fs-head, title)) }
-  let ph-h = 104
+  // The heading runs the full width of the frame and the device stands in the
+  // middle of it, so the device has to start BELOW the heading band - it cannot
+  // just be centred on the page. Its height follows from what is left, instead
+  // of being a constant that happened to clear an 18.8pt heading (a longer
+  // title at 23.4pt ran straight into the phone).
+  let band = if title != none { 36.0 } else { 16.9 }
+  let avail = 126.0 - band
+  let ph-h = calc.min(104.0, avail)
   let ph-w = ph-h * 0.49
   let cx = 127.0
-  let pty = 71 - ph-h / 2
+  let pty = band + (avail - ph-h) / 2
   let leftEdge = cx - ph-w / 2
   let rightEdge = cx + ph-w / 2
   place(top + left, dx: (cx - ph-w / 2) * 1mm - M, dy: pty * 1mm - M, phone(ph-h))

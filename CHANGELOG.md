@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.6.0
+
+**A deck now reads as one object.** The cover opened on the brand range and
+every slide after it was a plain white page. The range is washed in behind all
+of them at a few per cent - texture on the page rather than a picture - with the
+cover left alone, since it carries the same photograph at full strength. Light
+and dark carry different values (the snow is light, so what whispers on white
+shouts on a dark page); `BGART` overrides them, `BGART=0` gives plain pages back
+for a deck of dense tables or edge-to-edge screenshots.
+
+**The accent finally reaches author text.** `deck.md` is deliberately literal,
+so the one thing a speaker wants to mark - the operative word of a headline -
+could not be marked at all. `*asterisks*` set a span in the brand red, in any
+field of any layout. The builder warns at two spans on a slide: red that lands
+twice reads as decoration rather than emphasis.
+
+**Cyrillic in documents was silently wrong.** The slide template listed the
+bundled Golos Text after Google Sans Flex, the document template did not, so a
+Russian document fell through to Typst's default serif - no error, no warning,
+just a face that belongs to no template. Fixed, and both paths are now asserted
+on the embedded fonts rather than by eye.
+
+**Type and spacing, after a full read of the catalog.** The scale moves one step
+up (45.8/29.3/23.4pt), so a headline carries a room. The subhead goes back to
+being one line that finishes a heading: seven layouts were setting whole
+paragraphs in it, which reads as a heavy block, not as a level of hierarchy -
+those are body text now. Gaps that had drifted into hardcoded millimetres take
+their shared tokens again, the annotated-visual device no longer overlaps the
+heading band, and the quote attribution is a muted line rather than a subhead.
+The `kpis` layout is gone - it was `metric-cols` with a different label - and
+`@kpis` maps onto it, so existing decks keep building.
+
+**Cards hold their edge over the art.** A light card tuned against a white page
+disappeared where a mountain shoulder crossed it; the fill and hairline are a
+couple of steps darker. The code panel is now the same surface as a card - it
+had its own near-miss grey - so the deck has one kind of raised block instead of
+two.
+
+Page numbers read "7 / 41", with the total muted.
+
 ## 0.5.0
 
 **Slide decks, composed rather than marked up.** The repository already had a

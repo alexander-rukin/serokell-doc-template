@@ -4,6 +4,7 @@
 #   ./render-deck.sh ~/talks/kickoff.md               -> ~/talks/kickoff.pdf
 #   ./render-deck.sh ~/talks/kickoff.md /tmp/out.pdf  -> /tmp/out.pdf
 #   THEME=dark ./render-deck.sh ~/talks/kickoff.md    -> dark palette
+#   BGART=0 ./render-deck.sh ~/talks/kickoff.md       -> no mountains behind the slides
 #
 # This is the entry point used by the `serokell-slides` skill. Unlike
 # build-deck.sh it does not require the deck to live in decks/, and it never
@@ -98,11 +99,20 @@ case "$theme" in
   *) echo "error: theme must be light or dark, got '$theme'" >&2; exit 1 ;;
 esac
 
+# how much of the background range survives the veil; BGART=0 turns it off
+bgart_arg=()
+if [ -n "${BGART:-}" ]; then
+  case "$BGART" in
+    ''|*[!0-9.]*) echo "error: BGART must be a number, got '$BGART'" >&2; exit 1 ;;
+  esac
+  bgart_arg=(--input "bgart=${BGART}")
+fi
+
 typst compile "$WORK/src/deck.typ" "$OUT" \
   --root "$WORK" \
   --font-path "$TEMPLATE_DIR/assets/fonts" \
   --ignore-system-fonts \
-  --input "theme=${theme}"
+  --input "theme=${theme}" "${bgart_arg[@]}"
 
 # One page per slide. A slide with too much text is CLIPPED rather than split,
 # so this catches the other failure: a layout that flowed onto a second page.

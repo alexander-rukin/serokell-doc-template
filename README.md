@@ -292,7 +292,13 @@ To build a deck file directly:
 ```bash
 ./render-deck.sh ~/talks/kickoff.md              # -> ~/talks/kickoff.pdf
 THEME=dark ./render-deck.sh ~/talks/kickoff.md   # dark palette
+BGART=0 ./render-deck.sh ~/talks/kickoff.md      # no mountains behind the slides
 ```
+
+Every slide but the cover carries the brand range as a wash - the same
+photograph the deck opens with, faded to a few per cent so it reads as paper
+texture rather than a picture. `BGART` sets how much of it survives (`0.07` on
+light, `0.06` on dark by default, `0` for plain pages).
 
 Like `render.sh`, it takes a file from anywhere and never writes inside the
 template directory. The builder warns when a slide has more text than its

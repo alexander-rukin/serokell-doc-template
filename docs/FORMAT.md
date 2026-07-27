@@ -44,10 +44,39 @@ Plain prose here becomes the body.
 - Everything else is body prose.
 - Options ride on the `@` line: `@split image=assets/x.png`, `@mobile-showcase n=2`.
 - Text is literal - write single hyphens, arrows like `->`, parentheses freely.
-  (Inline markdown bold/italic is not interpreted.)
+  (Inline markdown bold/italic is not interpreted; the one exception is the
+  accent span below.)
 - Cyrillic renders in the bundled Golos Text (Latin stays Google Sans Flex).
 - Every slide except the cover/closing carries a footer: slide number left,
   small Serokell mark right. Set `theme: dark` for the dark palette.
+
+## The accent span
+
+Wrap a few words in asterisks and they come out in the brand red:
+
+```
+@statement
+# Formal verification, *without the theatre*
+```
+
+In a headline that is colour alone - the type is already bold. In running text
+the span is set bold as well, because red at body weight does not hold.
+
+It works in any field of any layout: a headline, an item, a caption, the number
+on a `@stat` slide. One rule, and the generator warns when it is broken:
+
+```
+warning: slide 4 (@bullets): 2 accented spans - the red carries one idea per
+slide, more and it stops reading as emphasis
+```
+
+The accent is a spotlight, not a highlighter - it points at the one word a
+listener should leave the slide with. A lone asterisk, or a pair spanning a line
+break, stays a literal character, so `5 * 3` needs no escaping.
+
+Who decides what to mark: whoever writes the deck. When Claude drafts it, it
+proposes the spans and you edit them in the Markdown like any other word - the
+markup is in the text, not hidden in a style, so there is nothing to hunt for.
 
 ## Length matters more than it looks
 
@@ -95,8 +124,7 @@ Treat every such warning as a real defect: shorten the text or split the slide.
 | `@layout` | headline `#` | fields | items `-` |
 |-----------|--------------|--------|-----------|
 | `@stat` | the one big number | `caption` = prose, `sub:` | - |
-| `@kpis` | heading | - | 2-4 x `- 98% \| label` |
-| `@metric-cols` | heading | - | 2-4 x `- 40% \| paragraph` |
+| `@metric-cols` | heading | - | 2-4 x `- 40% \| paragraph` (`@kpis` is an alias) |
 | `@metric-grid` | heading (left) | `desc:` | exactly 4 x `- 40% \| label` |
 | `@metric-list` | heading (left) | `lead:` | 2-4 x `- 40% \| Label \| description` |
 

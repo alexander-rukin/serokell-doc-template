@@ -76,10 +76,33 @@ def esc(s):
     return s
 
 
+# The one piece of inline markup a deck.md has: *a span in asterisks* is set in
+# the brand red and bold (#ac in the layout library). Everything else the author
+# types stays literal, which is why esc() escapes the asterisk - a lone one, or a
+# pair spanning a line break, is still just a character.
+ACCENT_RE = re.compile(r"\*([^*\n]+)\*")
+
+
+def strip_accent(s):
+    """Author text with the accent markers removed - what the reader will see."""
+    return ACCENT_RE.sub(r"\1", s or "")
+
+
+def markup(s):
+    """Escape author text, turning *spans* into accented ones."""
+    out, pos = [], 0
+    for m in ACCENT_RE.finditer(s):
+        out.append(esc(s[pos:m.start()]))
+        out.append("#ac[" + esc(m.group(1)) + "]")
+        pos = m.end()
+    out.append(esc(s[pos:]))
+    return "".join(out)
+
+
 def content(s):
     """Author text -> a Typst content literal [ ... ]; blank line -> paragraph."""
     parts = [p.strip() for p in re.split(r"\n\s*\n", (s or "").strip()) if p.strip()]
-    body = "\n\n".join(esc(p).replace("\n", " \\\n") for p in parts)
+    body = "\n\n".join(markup(p).replace("\n", " \\\n") for p in parts)
     return "[" + body + "]"
 
 
@@ -379,8 +402,11 @@ def _agenda(layout, opts, f):
 
 
 def _kpis(layout, opts, f):
-    return "#kpis(%s, %s)" % (content(f["title"] or ""),
-                              pair_list(f, layout, 2, "98% | label", 2, 4))
+    # `@kpis` was a second figures-in-a-row layout whose only difference from
+    # metric-cols was a one-line label instead of a paragraph. It is kept as an
+    # alias so existing decks still render.
+    return "#metric-cols(%s, %s)" % (content(f["title"] or ""),
+                                     pair_list(f, layout, 2, "98% | label", 2, 4))
 
 
 def _timeline(layout, opts, f):
@@ -599,7 +625,7 @@ LIMITS = {
     "compare":          {"title": 70, "parts": (24, 170)},
     "table":            {"title": 70, "parts": (40, 40, 40, 40, 40)},
     "stat":             {"title": 12},
-    "kpis":             {"title": 70, "parts": (8, 40)},
+    "kpis":             {"title": 70, "parts": (8, 130)},   # alias of metric-cols
     "metric-list":      {"title": 60, "parts": (8, 26, 90)},
     "metric-cols":      {"title": 70, "parts": (8, 130)},
     "metric-grid":      {"title": 60, "parts": (8, 30)},
@@ -621,10 +647,24 @@ LIMITS = {
 }
 
 
+def check_accent(n, layout, f):
+    """The brand accent is a spotlight: two of them on one slide is none."""
+    fields = [f.get("title") or "", f.get("body") or ""]
+    fields += list(f.get("items") or []) + list(f.get("quote") or [])
+    fields += [v for k, v in (f.get("fields") or {}).items() if isinstance(v, str)]
+    spans = sum(len(ACCENT_RE.findall(t)) for t in fields)
+    if spans > 1:
+        print("warning: slide %d (@%s): %d accented spans - the red carries one "
+              "idea per slide, more and it stops reading as emphasis"
+              % (n, layout, spans), file=sys.stderr)
+
+
 def check_budget(n, layout, f):
     lim = LIMITS.get(layout, {})
 
     def warn(what, text, cap):
+        # the asterisks are markup, not something the reader sees
+        text = strip_accent(text)
         if cap and len(text) > cap:
             print("warning: slide %d (@%s): %s is %d chars, the layout holds about %d "
                   "- it will be clipped, shorten it or split the slide"
@@ -681,6 +721,7 @@ def main():
                       "the slide body instead." % (n, layout, k, k), file=sys.stderr)
         try:
             check_budget(n, layout, f)
+            check_accent(n, layout, f)
             out.append(emit(layout, opts, f))
         except SystemExit as e:
             raise SystemExit("slide %d (@%s): %s" % (n, layout, str(e).replace("deck.md: ", "")))

@@ -13,16 +13,19 @@
 
 // Google Sans Flex ships as per-optical-size families. Picking the family
 // chooses the optical size; `weight` chooses the cut.
-// Each face is a fallback list ending in an emoji font, so an emoji typed
-// anywhere in the Markdown resolves to a glyph instead of an empty box.
+// Each face is a fallback list: Golos Text covers the Cyrillic that Google Sans
+// Flex does not carry, and the emoji font at the end resolves an emoji typed
+// anywhere in the Markdown to a glyph instead of an empty box. Without the Golos
+// entry Typst falls back to its own default serif, so a Russian heading would
+// come out in a face that belongs to no template at all.
 // Noto Color Emoji (COLRv1) is bundled: it is vector, so it stays sharp in
 // print, and it is half the size of the bitmap build. Apple Color Emoji cannot
 // be bundled, its licence does not allow redistribution.
 #let font-emoji = "Noto Color Emoji"
-#let font-display = ("Google Sans Flex 120pt", font-emoji) // cover title only
-#let font-heading = ("Google Sans Flex 36pt", font-emoji) // h1-h3
-#let font-body = ("Google Sans Flex 24pt", font-emoji) // body copy
-#let font-mono = ("JetBrains Mono", font-emoji) // code
+#let font-display = ("Google Sans Flex 120pt", "Golos Text", font-emoji) // cover title only
+#let font-heading = ("Google Sans Flex 36pt", "Golos Text", font-emoji) // h1-h3
+#let font-body = ("Google Sans Flex 24pt", "Golos Text", font-emoji) // body copy
+#let font-mono = ("JetBrains Mono", "Golos Text", font-emoji) // code
 
 #let size-body = 10.5pt
 #let leading-body = 0.72em

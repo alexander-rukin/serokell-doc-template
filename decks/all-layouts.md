@@ -108,12 +108,6 @@ caption: Building a deck with one command
 caption: of critical paths covered by tests
 sub: measured over the last quarter
 
-@kpis
-# The year in numbers
-- 12 | projects delivered
-- 98% | of clients came back
-- 4 | new teams
-
 @metric-cols
 # What it bought us
 - 40% | Less time spent preparing a report for every release

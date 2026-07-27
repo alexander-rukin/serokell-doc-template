@@ -80,7 +80,7 @@ lead: The seams are what keep the brand in one place
 - The generator | Turns author markdown into layout calls, refuses what will not fit
 - The skills | Documents, candidate profiles and decks, composed on request
 
-@kpis
+@metric-cols
 # Where it stands
 - 37 | slide layouts
 - 3 | skills in one plugin

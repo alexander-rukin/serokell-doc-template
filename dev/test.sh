@@ -23,6 +23,7 @@ STAMP="$WORK/.stamp"
 pass=0; fail=0
 ok()   { printf '  ok    %s\n' "$1"; pass=$((pass + 1)); }
 bad()  { printf '  FAIL  %s\n' "$1"; [ -n "${2:-}" ] && printf '        %s\n' "$2"; fail=$((fail + 1)); }
+skip_() { printf '  skip  %s\n' "$1"; }
 head_() { printf '\n%s\n' "$1"; }
 
 command -v typst >/dev/null 2>&1 || { echo "typst is not installed - cannot run the suite." >&2; exit 1; }
@@ -273,6 +274,62 @@ if ./render.sh "$WORK/doc/fenced.md" "$WORK/fenced.pdf" >/dev/null 2>&1; then
   ok "an image path inside a fenced example is not fetched"
 else
   bad "fenced path in document" "a code sample aborted the build"
+fi
+
+head_ "The accent span"
+printf '@statement\n# A headline with *one red span*\nA line beneath it\n' > "$WORK/acc.md"
+out=$(python3 src/slidegen.py "$WORK/acc.md" 2>"$WORK/acc.err")
+if echo "$out" | grep -q '#ac\[one red span\]' && [ ! -s "$WORK/acc.err" ]; then
+  ok "*a span* becomes the brand accent"
+else
+  bad "accent span" "$(echo "$out" | tail -1) / $(cat "$WORK/acc.err")"
+fi
+
+printf '@split\n# Five times three is 5 * 3\nAnd a lone * character\n' > "$WORK/star.md"
+if ! python3 src/slidegen.py "$WORK/star.md" 2>/dev/null | grep -q '#ac\['; then
+  ok "an unpaired asterisk stays a literal character"
+else
+  bad "lone asterisk" "it was read as markup"
+fi
+
+printf '@bullets\n# A *marked* headline\nlead: and *another* one\n- x | y\n' > "$WORK/two.md"
+if python3 src/slidegen.py "$WORK/two.md" 2>&1 >/dev/null | grep -q "2 accented spans"; then
+  ok "two spans on one slide are called out"
+else
+  bad "two accents" "no warning - the one-per-slide rule is unenforced"
+fi
+
+# the markers are markup; counting them against the layout's budget would warn
+# on text that fits - @statement holds 110, so a 110-char headline plus its two
+# asterisks is exactly the case that used to trip
+long=$(printf 'x%.0s' $(seq 1 110))
+printf '@statement\n# *%s*\n' "$long" > "$WORK/budget.md"
+if ! python3 src/slidegen.py "$WORK/budget.md" 2>&1 >/dev/null | grep -q "chars"; then
+  ok "the asterisks do not count against the length budget"
+else
+  bad "accent vs budget" "markers were measured as text"
+fi
+
+head_ "Cyrillic lands on the bundled face, not on a stand-in"
+# Google Sans Flex has no Cyrillic, so every font stack ends with Golos Text.
+# Miss that entry in one of the two templates and Typst quietly substitutes its
+# own default serif: the page still builds and still looks deliberate, which is
+# why this needs a test rather than an eye.
+if command -v pdffonts >/dev/null 2>&1; then
+  printf '# %s\n\n%s\n' "Заголовок" "Абзац на русском." > "$WORK/cyr.md"
+  printf '@statement\n# %s\n%s\n' "Заголовок" "Абзац на русском." > "$WORK/cyr-deck.md"
+  for pair in "render.sh cyr document" "render-deck.sh cyr-deck deck"; do
+    set -- $pair
+    if ./"$1" "$WORK/$2.md" "$WORK/$2.pdf" >/dev/null 2>&1 \
+       && pdffonts "$WORK/$2.pdf" | grep -qi golos \
+       && ! pdffonts "$WORK/$2.pdf" | grep -qiE 'libertinus|deja ?vu|liberation|noto serif'; then
+      ok "a Cyrillic $3 sets in Golos Text"
+    else
+      bad "Cyrillic in a $3" "$(pdffonts "$WORK/$2.pdf" 2>&1 | tail -3)"
+    fi
+  done
+else
+  skip_ "pdffonts is not installed - cannot check which faces were embedded"
 fi
 
 head_ "A deck cannot write outside its own folder"
