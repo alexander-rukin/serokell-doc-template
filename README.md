@@ -327,9 +327,6 @@ the template itself.
 - `decks/all-layouts.md` - a deck that renders every layout; build it to see
   the vocabulary.
 - `src/slides.typ` - the layout library and the locked brand shell.
-- `docs/GOOGLE-SLIDES-THEME.md` - the build sheet for rebuilding the same style
-  as a Google Slides theme, for people who would rather work there. Every
-  number comes from `src/slides.typ`, which stays the brand of record.
 
 ---
 
@@ -413,7 +410,6 @@ skills/           the Claude Code skills: serokell-pdf, serokell-cv, serokell-sl
 content/          your .md documents (and their images)
 decks/            your decks
 docs/FORMAT.md    the deck.md field reference
-docs/GOOGLE-SLIDES-THEME.md   build sheet for the Google Slides theme
 assets/fonts/     bundled fonts + OFL licences
 assets/           brand artwork and marks (provenance in assets/CREDITS.md)
 dev/              test suite and type specimens
