@@ -78,7 +78,8 @@ while IFS= read -r ref; do
   esac
   if [ -f "$SRC_DIR/$ref" ]; then
     mkdir -p "$WORK/content/$(dirname "$ref")"
-    cp "$SRC_DIR/$ref" "$WORK/content/$ref"
+    # scaled to what a page can show on the way in - see src/fit-image.py
+    python3 "$TEMPLATE_DIR/src/fit-image.py" "$SRC_DIR/$ref" "$WORK/content/$ref"
   else
     # Stopping here beats "skipping" followed by a Typst failure naming a temp
     # directory this script has already deleted.

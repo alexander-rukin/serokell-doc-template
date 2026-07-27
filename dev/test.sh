@@ -276,6 +276,60 @@ else
   bad "fenced path in document" "a code sample aborted the build"
 fi
 
+head_ "Images are scaled to what the page can show"
+# Typst embeds a raster as handed over, so an unscaled phone photo lands in the
+# PDF whole. Without Pillow the copy is untouched, which is a warning, not a
+# failure - so the test only runs where Pillow is there to do the work.
+if python3 -c "import PIL" 2>/dev/null; then
+  mkdir -p "$WORK/big"
+  python3 - "$WORK/big/huge.jpg" <<'PY'
+import sys
+from PIL import Image
+im = Image.open("assets/sample-photo.jpg")
+im.resize((6000, int(6000 * im.size[1] / im.size[0])), Image.LANCZOS).save(sys.argv[1], quality=97)
+PY
+  before=$(wc -c < "$WORK/big/huge.jpg")
+  printf '@image-full image=huge.jpg\ncaption: c\n' > "$WORK/big/d.md"
+  if ./render-deck.sh "$WORK/big/d.md" "$WORK/big/d.pdf" >/dev/null 2>&1; then
+    after=$(wc -c < "$WORK/big/d.pdf")
+    if [ "$after" -lt $((before / 3)) ]; then
+      ok "a 6000px photo does not go into the deck at full size"
+    else
+      bad "image scaling" "source $before bytes, PDF $after - it was embedded whole"
+    fi
+  else
+    bad "image scaling" "the deck with a large photo failed to build"
+  fi
+
+  cp assets/serokell-mark-dark.svg "$WORK/big/logo.svg" 2>/dev/null || \
+    cp assets/serokell-mark-dark.png "$WORK/big/logo.svg"
+  svg_before=$(wc -c < "$WORK/big/logo.svg")
+  python3 src/fit-image.py "$WORK/big/logo.svg" "$WORK/big/logo-out.svg"
+  if [ "$(wc -c < "$WORK/big/logo-out.svg")" = "$svg_before" ]; then
+    ok "vector art is copied byte for byte"
+  else
+    bad "svg passthrough" "the SVG was rewritten"
+  fi
+
+  python3 - "$WORK/big/alpha.png" <<'PY'
+import sys
+from PIL import Image
+Image.new("RGBA", (4000, 4000), (0, 0, 0, 0)).save(sys.argv[1])
+PY
+  python3 src/fit-image.py "$WORK/big/alpha.png" "$WORK/big/alpha-out.png"
+  if python3 -c "
+import sys
+from PIL import Image
+im = Image.open('$WORK/big/alpha-out.png')
+sys.exit(0 if im.mode in ('RGBA', 'LA') and max(im.size) <= 2600 else 1)"; then
+    ok "transparency survives the scaling"
+  else
+    bad "alpha" "the alpha channel was flattened or the image not scaled"
+  fi
+else
+  skip_ "Pillow is not installed - image scaling is a copy plus a warning"
+fi
+
 head_ "The accent span"
 printf '@statement\n# A headline with *one red span*\nA line beneath it\n' > "$WORK/acc.md"
 out=$(python3 src/slidegen.py "$WORK/acc.md" 2>"$WORK/acc.err")

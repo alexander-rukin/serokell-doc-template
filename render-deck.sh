@@ -85,7 +85,8 @@ while IFS= read -r ref; do
   [ -f "$SRC_DIR/$ref" ] || die "image not found next to the deck: $ref
   put the file at $SRC_DIR/$ref, or leave the image off that slide for a placeholder"
   mkdir -p "$WORK/$(dirname "$ref")"
-  cp "$SRC_DIR/$ref" "$WORK/$ref"
+  # scaled to what a slide can show on the way in - see src/fit-image.py
+  python3 "$TEMPLATE_DIR/src/fit-image.py" "$SRC_DIR/$ref" "$WORK/$ref"
 done < <(python3 "$TEMPLATE_DIR/src/slidegen.py" --images "$SRC")
 
 # deck.md -> Typst (warnings about over-long text go to stderr and are real)

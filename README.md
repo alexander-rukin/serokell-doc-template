@@ -266,6 +266,21 @@ is `content/my-proposal.md`, then `![](diagram.svg)` points at
 `content/diagram.svg`. Both raster and SVG work; prefer SVG for anything
 vector-shaped, since it stays sharp in print.
 
+**Photographs are scaled on the way in.** Typst embeds a raster exactly as it is
+handed over, so a 6 MB phone photo would sit in the PDF at 6000 px - none of
+which a page or a projector can show, all of which lands in the file you email.
+The build caps the copy it uses at 2600 px on the longest side, roughly 260 dpi
+across a full-bleed slide, and says what it did:
+
+```
+image: site-photo.jpg 6.7 MB -> 1.0 MB (6000x3985 -> 2600x1726)
+```
+
+Your own file is never touched. SVG and PDF art are passed through untouched
+too, and so is transparency. This needs [Pillow](https://pypi.org/project/pillow/)
+(`pip install pillow`); without it the build still works and says what the
+unscaled image costs.
+
 See `content/example-proposal.md` for a worked example of every feature above,
 and `content/example-profile.md` for the candidate-profile shape.
 

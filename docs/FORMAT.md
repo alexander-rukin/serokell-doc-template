@@ -158,6 +158,10 @@ Treat every such warning as a real defect: shorten the text or split the slide.
 | `@desktop-showcase` | heading | prose = body | - |
 | `@annotated` | heading | `image=path` | 1-4 x `- left\|right \| 40 \| Label` |
 
+Photographs are scaled to 2600 px on the longest side when the deck is built -
+Typst would otherwise embed a phone photo at full size. The source file is left
+alone, SVG is passed through, and the build prints what it scaled.
+
 Leave the image path empty (`- | Label | text`) to get the grey placeholder at
 the same size - useful while the screenshot does not exist yet. Pointing at a
 file that is not there is a different thing and stops the build, naming the
