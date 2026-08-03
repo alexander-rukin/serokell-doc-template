@@ -109,11 +109,16 @@ if [ -n "${BGART:-}" ]; then
   bgart_arg=(--input "bgart=${BGART}")
 fi
 
+# The array is expanded through `${a[@]+"${a[@]}"}`, not plain `"${a[@]}"`.
+# bash 3.2, which is what macOS ships as /bin/bash, treats expanding an EMPTY
+# array as reading an unset variable, so under `set -u` the build died with
+# "bgart_arg[@]: unbound variable" and produced no PDF - on every deck that did
+# not pass BGART, which is nearly all of them. Do not simplify this back.
 typst compile "$WORK/src/deck.typ" "$OUT" \
   --root "$WORK" \
   --font-path "$TEMPLATE_DIR/assets/fonts" \
   --ignore-system-fonts \
-  --input "theme=${theme}" "${bgart_arg[@]}"
+  --input "theme=${theme}" ${bgart_arg[@]+"${bgart_arg[@]}"}
 
 # One page per slide. A slide with too much text is CLIPPED rather than split,
 # so this catches the other failure: a layout that flowed onto a second page.
