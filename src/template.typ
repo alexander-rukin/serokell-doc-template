@@ -304,7 +304,13 @@
   )
 
   set text(font: font-body, size: size-body, fill: ink, lang: "en")
-  set par(justify: true, leading: leading-body, spacing: 1.15em)
+  // Ragged right, not justified. Inline code is close to unbreakable, so when a
+  // pill does not fit the rest of a line it moves down whole and justification
+  // stretches the line it left behind. Every document type here carries inline
+  // code - proposals, audit reports, profiles with a stack line - so this is the
+  // normal case, not an edge one. Ragged right has no failure mode; justified
+  // text with rivers does.
+  set par(justify: false, leading: leading-body, spacing: 1.15em)
 
   // --- headings -------------------------------------------------------------
   show heading: set text(font: font-heading, fill: ink, hyphenate: false)

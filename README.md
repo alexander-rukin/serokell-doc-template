@@ -236,6 +236,18 @@ One limit worth knowing: a cell cannot contain a real bulleted list or a code
 block. You can force a line break inside a cell with `<br>`, but a `-` typed
 after it stays a literal dash rather than becoming a bullet.
 
+**Long unbroken strings** - a base58 address, a commit hash - have nothing to
+break on, so they overflow their column instead of wrapping. Split them yourself
+with `<br>`:
+
+```markdown
+| `example-program` | `AAAA1111bbbb2222CCCC3333`<br>`dddd4444EEEE5555ffff` |
+```
+
+Breaking them automatically would mean inserting invisible characters, and those
+travel with the text when someone copies the address out of the PDF, so it comes
+out corrupted with nothing to see. A manual break leaves the copied text clean.
+
 #### Table width
 
 There are two modes, and which one looks better depends on your document, so

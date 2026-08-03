@@ -138,6 +138,16 @@ Real bugs that were hit and fixed here. Do not re-derive them.
   render as empty boxes, because the build ignores system fonts. The COLRv1 cut
   is vector, so it stays sharp in print and is half the size of the bitmap
   build. Apple Color Emoji cannot be bundled; its licence forbids redistribution.
+- **Body text is ragged right on purpose** (`set par(justify: false)`). Inline
+  code is near-unbreakable: a pill that does not fit moves to the next line
+  whole, and justification then stretches the line it left, which is what
+  produced visible rivers in the audit report. Do not turn justification back on
+  without rebuilding a document full of inline code and looking at it.
+- **A long unbroken token (a base58 address, a hash) cannot be hyphenated** and
+  will overflow its table cell. The fix is a manual `<br>` in the Markdown.
+  Inserting zero-width spaces to break it automatically was measured and
+  rejected: they land in the PDF text layer, so a copied address silently comes
+  out corrupted, which is worse than the layout problem.
 - **`art-logo-centre` is measured from the source PNG** (the mark occupies rows
   773..835 of 940). The page number is aligned to that line. Replacing
   `footer-mountains-right.png` means re-measuring it.
