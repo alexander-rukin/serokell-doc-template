@@ -246,7 +246,9 @@ with `<br>`:
 
 Breaking them automatically would mean inserting invisible characters, and those
 travel with the text when someone copies the address out of the PDF, so it comes
-out corrupted with nothing to see. A manual break leaves the copied text clean.
+out corrupted with nothing to see. A manual break leaves the copied text clean
+of invisible characters, but shows up as a newline character at the split when
+copied.
 
 #### Table width
 

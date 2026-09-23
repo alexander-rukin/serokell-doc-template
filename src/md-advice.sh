@@ -46,4 +46,38 @@ if [ -n "$dupe" ]; then
   hint "  covers (a client, a phase) makes the document scannable."
 fi
 
+# --- 3. Long unbroken code spans in a table cell -----------------------------
+# A code span with spaces in it (`vault = a + b`) still wraps fine inside a
+# cell - Typst breaks it at the spaces, verified by rendering one. It is
+# specifically an UNBROKEN token - a commit hash, a base58 address, nothing
+# to break on - that moves as one solid pill and overflows the column instead.
+# Walked with index()/substr() rather than a `{n,}` regex interval, which is
+# not guaranteed available in every awk this runs under.
+#
+# Reports every offending row, not just the first: a document can have a
+# short, harmless span on an early row and a genuinely overflowing one further
+# down (e.g. a wide two-column metadata table followed by a narrow four-column
+# one), and stopping at the first match would flag the harmless row while
+# staying silent about the real one.
+awk '
+  /^\|/ && $0 !~ /<br>/ {
+    line = $0
+    hit = 0
+    while ((i = index(line, "`")) > 0) {
+      rest = substr(line, i + 1)
+      j = index(rest, "`")
+      if (j == 0) break
+      tok = substr(rest, 1, j - 1)
+      if (length(tok) >= 24 && tok !~ /[ \t]/) hit = 1
+      line = substr(rest, j + 1)
+    }
+    if (hit) print NR
+  }
+' "$SRC" | while read -r line; do
+  hint "line $line has a table cell with a long unbroken code span. It cannot"
+  hint "  wrap and will overflow its column; split it with a manual <br>, e.g."
+  hint "  \`AAAA1111bbbb2222\`<br>\`CCCC3333dddd4444\` - see the README's Tables"
+  hint "  section."
+done
+
 exit 0

@@ -147,7 +147,17 @@ Real bugs that were hit and fixed here. Do not re-derive them.
   will overflow its table cell. The fix is a manual `<br>` in the Markdown.
   Inserting zero-width spaces to break it automatically was measured and
   rejected: they land in the PDF text layer, so a copied address silently comes
-  out corrupted, which is worse than the layout problem.
+  out corrupted, which is worse than the layout problem. A manual `<br>` is not
+  fully clean either: copying the whole token still picks up a stray newline at
+  the split, confirmed with `pdftotext` and true of a plain `linebreak()` or a
+  `stack()` alike, so it is how PDF text extraction handles any visual line
+  split, not something this template is doing. The difference from a zero-width
+  space is that the corruption is visible - a newline in the middle of a pasted
+  address is obvious, an invisible character is not - so `<br>` still stands as
+  the better of the two options. There is no template-level fix: it would need
+  an `ActualText` override on the split content, which Typst does not expose as
+  of 0.15 (its own accessibility docs note `pdf.actual-text()[]` is a possible,
+  not yet shipped, function). Revisit if that ships.
 - **`art-logo-centre` is measured from the source PNG** (the mark occupies rows
   773..835 of 940). The page number is aligned to that line. Replacing
   `footer-mountains-right.png` means re-measuring it.

@@ -8,6 +8,7 @@
 #let accent = rgb("#D92B04")
 #let ink = rgb("#1A1A1A") // body text
 #let ink-soft = rgb("#5A5F66") // captions, page numbers, table rules
+#let ink-faint = rgb("#72777E") // table header repeated on a later page
 #let hairline = rgb("#DDE1E5") // table / block borders
 #let code-bg = rgb("#F5F6F7")
 
@@ -43,8 +44,9 @@
 // A document can override this from its frontmatter with `tables: full`.
 #let table-width = "auto"
 
-#let page-margin = (top: 24mm, bottom: 40mm, x: 20mm)
+#let page-margin = (top: 24mm, bottom: 55mm, x: 20mm)
 #let page-width = 210mm // A4
+#let page-height = 297mm // A4
 
 // ---------------------------------------------------------------- artwork
 //
@@ -67,7 +69,16 @@
 // Where the white veil stops being fully opaque. Below this fraction of the
 // artwork the mountain starts becoming visible; above it the artwork is gone.
 // Raise it to push the mountain further down the page.
-#let art-fade-start = 38%
+//
+// Kept clear of body text on purpose: content's own bottom margin sits at
+// depth (1 - page-margin.bottom / art-peak-height) = 40.2% into this box, so
+// anything at or above that line is still content, not footer. A value at or
+// below that depth would let the mountain show through before text reaches
+// its own margin, putting visible rock behind the last line on a page. 45%
+// keeps a few points of margin past 40.2% so a descender or a table row's
+// bottom inset doesn't tip over the line. Re-derive both numbers together if
+// page-margin.bottom or art-peak-height changes.
+#let art-fade-start = 45%
 
 // Vertical centre of the Serokell mark baked into the peak image, as a fraction
 // of that image's height measured from its top. Taken from the source PNG: the
@@ -204,9 +215,9 @@
 
 // ---------------------------------------------------------------- md tables
 
-// Shared so the two width modes are styled identically.
+// Shared so both width modes are styled identically.
 #let table-stroke = (x, y) => (
-  top: if y == 0 { 0pt } else if y == 1 { 1pt + ink } else { 0.5pt + hairline },
+  top: if y == 0 { 0pt } else { 0.5pt + hairline },
   bottom: 0pt,
   left: 0pt,
   right: 0pt,
@@ -220,53 +231,115 @@
   bottom: 7pt,
 )
 
-// Redraw a Markdown table with fractional columns so it fills the text width.
+// Rebuild a Markdown table as a grid, in both width modes.
 //
-// This has to produce a `grid`, not a `table`, for two reasons:
-//   * a `set table(columns: ..)` rule cannot win, because cmarker passes
-//     `columns` explicitly when it builds the element;
-//   * a `show table` rule that returns a new `table` matches its own output and
-//     recurses until Typst gives up.
-// A grid takes the same stroke and inset API, so the result is identical apart
-// from the column widths.
+// A grid is required, not a table, because:
+//   * `set table(columns: ..)` cannot win: cmarker passes `columns`
+//     explicitly when it builds the element;
+//   * a `show table` rule returning a new `table` matches its own output and
+//     recurses until Typst gives up;
+//   * the heavy rule under the header is an explicit line carried inside
+//     `table.header`'s own children (below), and only a `show` rule that
+//     rebuilds children this way can produce it without recursing.
+// A grid takes the same stroke and inset API, so the result differs from a
+// table only in column widths.
 //
-// Overriding cmarker's `table` through its `scope` looks tempting and does not
-// work: cmarker also resolves `table.cell` and `table.header` against that same
-// name, and a user-defined function has no fields.
-#let stretch-table(it) = {
-  let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
+// The heavy rule under the header is an explicit `grid.hline` carried inside
+// the header's own children, so it travels with the header wherever it
+// repeats and competes with no cell's stroke.
+//
+// Header labels are greyed where the header repeats on a later page, so the
+// repeat reads as a reminder of the columns rather than another row or a
+// new table. A header cell tells a repeat apart by its own page: Typst lays
+// each repetition out at its own location, so `here().page()` gives the
+// page it is drawn on. That is compared against a marker in the first body
+// row, which always sits on the page of the header's first appearance - a
+// marker placed before the grid would not, since orphan prevention can move
+// the header and first row together to the next page. `table-id` matches
+// each table to its own marker.
+//
+// Cell content is styled explicitly here rather than through `show table:
+// set text(..)` / `set par(..)` in the caller: those rules apply only while
+// the element stays a `table`, and this function hands back a `grid`.
+//
+// Cells are marked `breakable: false` so a row that does not fit in the
+// remaining space on a page moves whole to the next page instead of
+// splitting its content mid-sentence. Only rows whose cells are all under
+// 20% of the page's usable height: a taller row stays breakable, so it
+// cannot overflow a page outright. The decision is per row, not per cell,
+// so a single tall cell pins its whole row. Rows are taken as runs of `n`
+// cells, which holds because Markdown tables have no spans.
+//
+// The `context` measurement needs wraps the whole grid, not each cell: a
+// `grid.cell` returned from its own `context` block reaches the grid as an
+// opaque element, so `breakable`, `colspan`, and `rowspan` on it would be
+// silently lost.
+#let table-id = counter("table-id")
 
-  let convert(c, header: false) = {
-    let body = if header {
-      text(font: font-heading, weight: "semibold", size: 9.5pt, c.body)
-    } else {
-      c.body
+#let rebuild-table(it, tables) = context {
+  let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
+  let col-width = (page-width - 2 * page-margin.x) / n
+  let page-content-height = page-height - page-margin.top - page-margin.bottom
+
+  let id = table-id.get().first()
+  let grey-if-repeated(body) = context {
+    let marker = query(<table-first-row>).filter(m => m.value == id)
+    let repeated = marker.len() > 0 and here().page() > marker.first().location().page()
+    if repeated { text(fill: ink-faint, body) } else { body }
+  }
+
+  // `mark-first: true` tags the first cell for `grey-if-repeated` to find.
+  let convert(cells, header: false, mark-first: false) = {
+    let out = ()
+    for (i, row) in cells.chunks(n).enumerate() {
+      let styled = row.enumerate().map(((j, c)) => text(
+        font: if header { font-heading } else { font-body },
+        weight: if header { "semibold" } else { "regular" },
+        size: 9.5pt,
+        if header { grey-if-repeated(c.body) }
+        else if mark-first and i == 0 and j == 0 { [#metadata(id)<table-first-row>] + c.body }
+        else { c.body },
+      ))
+      let breakable = styled.any(s => {
+        measure(s, width: col-width).height > page-content-height * 20%
+      })
+      for (c, s) in row.zip(styled) {
+        let extra = (breakable: breakable)
+        let cs = c.at("colspan", default: 1)
+        if cs != 1 { extra.insert("colspan", cs) }
+        let rs = c.at("rowspan", default: 1)
+        if rs != 1 { extra.insert("rowspan", rs) }
+        out.push(grid.cell(..extra, s))
+      }
     }
-    let extra = (:)
-    let cs = c.at("colspan", default: 1)
-    if cs != 1 { extra.insert("colspan", cs) }
-    let rs = c.at("rowspan", default: 1)
-    if rs != 1 { extra.insert("rowspan", rs) }
-    grid.cell(..extra, body)
+    out
   }
 
   let kids = ()
+  let body = ()
   for c in it.children {
     if c.func() == table.header {
-      kids.push(grid.header(..c.children.map(x => convert(x, header: true))))
+      kids.push(grid.header(
+        ..convert(c.children, header: true),
+        grid.hline(stroke: 1pt + ink),
+      ))
     } else if c.func() == table.footer {
-      kids.push(grid.footer(..c.children.map(convert)))
+      kids += convert(body, mark-first: true)
+      body = ()
+      kids.push(grid.footer(..convert(c.children)))
     } else {
-      kids.push(convert(c))
+      body.push(c)
     }
   }
+  kids += convert(body, mark-first: true)
 
   // Column alignment from the Markdown colons lives on the table element's
   // `align` field as an array like (left, center, right), NOT on the cells -
   // the cells carry nothing but their body. Forgetting to carry this over
   // silently left-aligns every column.
+  set par(justify: false)
   grid(
-    columns: (1fr,) * n,
+    columns: if tables == "full" { (1fr,) * n } else { it.columns },
     align: it.at("align", default: auto),
     stroke: table-stroke,
     inset: table-inset,
@@ -315,34 +388,40 @@
   // --- headings -------------------------------------------------------------
   show heading: set text(font: font-heading, fill: ink, hyphenate: false)
 
-  // Space-below is deliberately larger than it looks it needs to be. Heading
-  // descenders (the tails on g/y/p) eat into it, and the nominal value has to
-  // clear the body's own paragraph spacing (~3.4mm) or a heading ends up closer
-  // to its text than two paragraphs are to each other. The gap below is kept
-  // generous so a heading reads as attached to the section it opens, not
-  // floating midway between two. The gap above still has to stay clearly larger
-  // than the gap below, or the heading drifts to the midpoint and stops
-  // grouping with its own section; H1 opens a major break, so its gap above is
-  // larger than H2's. Adjacent weak spacing collapses to the larger of the two,
-  // so an H1 directly followed by an H2 stays at the H2's gap-above rather than
-  // summing.
+  // Each heading opens with a weak break above it - 20mm/15mm/9mm for
+  // H1/H2/H3 - and closes with a smaller fixed gap below it - 7mm/5mm/3.5mm -
+  // weak so it collapses at the top of a page instead of stacking with the
+  // page margin. The above-gap is skipped when this heading directly follows
+  // another heading, so two headings in a row don't get a doubled gap.
+  let after-heading = state("after-heading", false)
+  let reset-after-heading = it => {
+    after-heading.update(false)
+    it
+  }
+
   show heading.where(level: 1): it => {
-    v(11mm, weak: true)
+    context if not after-heading.get() { v(20mm, weak: true) }
+    after-heading.update(true)
     block(text(size: 20pt, weight: "bold", it.body))
     v(7mm, weak: true)
   }
 
   show heading.where(level: 2): it => {
-    v(7mm, weak: true)
+    context if not after-heading.get() { v(15mm, weak: true) }
+    after-heading.update(true)
     block(text(size: 14pt, weight: "semibold", it.body))
     v(5mm, weak: true)
   }
 
   show heading.where(level: 3): it => {
-    v(5mm, weak: true)
+    context if not after-heading.get() { v(9mm, weak: true) }
+    after-heading.update(true)
     block(text(size: 11.5pt, weight: "semibold", fill: ink-soft, it.body))
     v(3.5mm, weak: true)
   }
+
+  // --- paragraphs ------------------------------------------------------------
+  show par: reset-after-heading
 
   // --- links ----------------------------------------------------------------
   show link: it => text(fill: accent, it)
@@ -361,41 +440,44 @@
   // NOTE: the body must be a content block with a `set par`, not a `par(..)`
   // call. Wrapping raw in an explicit `par` makes Typst treat the code as
   // block-level content inside a paragraph and silently drop it.
-  show raw.where(block: true): it => block(
-    width: 100%,
-    fill: code-bg,
-    stroke: (left: 2pt + accent),
-    radius: (right: 3pt),
-    inset: (x: 10pt, y: 9pt),
-    {
-      set par(justify: false, leading: 0.6em)
-      it
-    },
-  )
+  show raw.where(block: true): it => {
+    after-heading.update(false)
+    block(
+      width: 100%,
+      fill: code-bg,
+      stroke: (left: 2pt + accent),
+      radius: (right: 3pt),
+      inset: (x: 10pt, y: 9pt),
+      {
+        set par(justify: false, leading: 0.6em)
+        it
+      },
+    )
+  }
 
   // --- tables ---------------------------------------------------------------
-  // Clean and rule-light: a heavy line under the header, hairlines between rows.
-  set table(stroke: table-stroke, inset: table-inset, fill: none)
-  show table.cell.where(y: 0): set text(
-    font: font-heading,
-    weight: "semibold",
-    size: 9.5pt,
-  )
-  show table: set par(justify: false)
-  show table: set text(size: 9.5pt)
-
-  // In "full" mode the table is rebuilt as a grid with fractional columns.
-  // See `stretch-table` for why it has to be a grid and not a table.
-  show table: it => if tables == "full" { stretch-table(it) } else { it }
+  // Clean and rule-light: a heavy line under the header (its labels greyed where
+  // it repeats on a later page), hairlines between rows.
+  // Every table is rebuilt as a grid, in both width modes - see `rebuild-table`
+  // for why, and for why cell styling lives there rather than in a `show
+  // table: set ..` rule here.
+  show table: it => {
+    after-heading.update(false)
+    table-id.step()
+    rebuild-table(it, tables)
+  }
 
   // --- quotes ---------------------------------------------------------------
   set quote(block: true)
-  show quote: it => block(
-    width: 100%,
-    inset: (left: 9mm, right: 4mm, y: 1mm),
-    stroke: (left: 2.5pt + accent),
-    text(size: 10.5pt, fill: ink-soft, style: "italic", it.body),
-  )
+  show quote: it => {
+    after-heading.update(false)
+    block(
+      width: 100%,
+      inset: (left: 9mm, right: 4mm, y: 1mm),
+      stroke: (left: 2.5pt + accent),
+      text(size: 10.5pt, fill: ink-soft, style: "italic", it.body),
+    )
+  }
 
   // --- lists ----------------------------------------------------------------
   set list(marker: text(fill: accent, weight: "bold")[•], indent: 3mm, spacing: 0.9em)
@@ -404,15 +486,28 @@
     weight: "semibold",
     [#n.],
   ))
+  show list: reset-after-heading
+  show enum: reset-after-heading
 
   // --- figures --------------------------------------------------------------
   show figure.caption: set text(size: 8.5pt, fill: ink-soft)
+  // A captioned Markdown image comes out as a `figure`; resetting here, not on
+  // `image` directly, is what keeps this from also firing on the cover and
+  // footer artwork, which call `image` directly outside any figure or
+  // paragraph and must stay untouched by anything declared in this function -
+  // see the footer NOTE below.
+  show figure: reset-after-heading
   // NOTE: deliberately no `set image(width: 100%)` here. A global image set
   // rule also hits the cover and footer artwork and, combined with their
   // explicit `height`, stretches them out of aspect. Body images are sized in
   // main.typ, scoped to the rendered Markdown only.
 
   // --- rules ----------------------------------------------------------------
+  // Deliberately not wired into `after-heading`, unlike the block types above:
+  // the cover and footer draw their own decorative `line`s through this same
+  // selector, and their position relative to body content in the document's
+  // flow is not something to depend on. A leftover manual `---` still gets a
+  // normal accent-hairline; it just does not double as an after-heading reset.
   show line: set line(stroke: 0.6pt + hairline)
 
   if cover-page {
